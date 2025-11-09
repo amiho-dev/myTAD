@@ -5,20 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>myTAD - Account Management</title>
     
-    <!-- Subdomain Redirect Script -->
-    <script>
-        // Redirect if accessing from subdomain to root domain
-        (function() {
-            const hostname = window.location.hostname;
-            const rootDomain = 'thatoneamiho.cc';
-            
-            // Check if on a subdomain (but not the root domain itself)
-            if (hostname !== rootDomain && hostname.endsWith('.' + rootDomain)) {
-                // Redirect to root domain with the same path
-                window.location.href = 'https://' + rootDomain + window.location.pathname + window.location.search + window.location.hash;
-            }
-        })();
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com/">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
