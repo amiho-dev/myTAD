@@ -716,12 +716,18 @@
 
                         <!-- Owner Only: Add Admin Section -->
                         <div id="ownerOnlySection" style="margin-bottom: 20px; display: none;">
-                            <div style="color: #ffd700; margin-bottom: 15px; font-weight: 600;">👑 Owner Controls - Add Admin</div>
+                            <div style="color: #ffd700; margin-bottom: 15px; font-weight: 600;">👑 Owner Controls - Manage Admins</div>
 
                             <div class="form-group">
                                 <label class="form-label">Promote User to Admin</label>
                                 <input type="text" id="promoteTargetUser" class="form-input" placeholder="Enter user ID or username">
                                 <button class="btn" style="background: #ffd700; color: #000; width: 100%; margin-top: 10px; font-weight: bold;" onclick="handleAddAdmin()">✨ Promote to Admin</button>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label class="form-label">Revoke Admin from User</label>
+                                <input type="text" id="revokeTargetUser" class="form-input" placeholder="Enter user ID or username">
+                                <button class="btn" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); width: 100%; margin-top: 10px;" onclick="handleRevokeAdmin()">❌ Revoke Admin</button>
                             </div>
 
                             <div style="margin-top: 15px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-left: 3px solid #ffd700; border-radius: 10px;">
@@ -1085,13 +1091,34 @@
         }
 
         // Admin functions
-        function checkAdmin(username) {
-            const isAdmin = username === 'thatoneamiho';
-            if (isAdmin) {
-                document.getElementById('adminTabBtn').style.display = 'block';
-                document.getElementById('ownerOnlySection').style.display = 'block';
-                loadAdminUsers();
-            } else {
+        async function checkAdmin(username) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/check-admin.php`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.is_admin) {
+                    // Show admin panel
+                    document.getElementById('adminTabBtn').style.display = 'block';
+                    document.getElementById('ownerOnlySection').style.display = 'none'; // Hide owner-only for regular admins
+                    
+                    // Check if this is the owner
+                    if (username === 'thatoneamiho') {
+                        document.getElementById('ownerOnlySection').style.display = 'block'; // Show owner controls
+                    }
+                    
+                    loadAdminUsers();
+                } else {
+                    // Hide admin panel
+                    document.getElementById('adminTabBtn').style.display = 'none';
+                    document.getElementById('ownerOnlySection').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking admin status:', error);
                 document.getElementById('adminTabBtn').style.display = 'none';
                 document.getElementById('ownerOnlySection').style.display = 'none';
             }
@@ -1286,11 +1313,17 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/admin-add-admin.php`, {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/manage-admin-role.php`, {
                     method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId })
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'grant',
+                        user_id: userId
+                    })
                 });
 
                 const data = await response.json();
@@ -1300,6 +1333,51 @@
                     setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to promote user');
+                }
+            } catch (error) {
+                showError('Connection error');
+            }
+        }
+
+        async function handleRevokeAdmin() {
+            const targetUser = document.getElementById('revokeTargetUser').value.trim();
+
+            if (!targetUser) {
+                showError('Please enter a user ID');
+                return;
+            }
+
+            let userId = parseInt(targetUser) || null;
+            if (!userId) {
+                showError('Please enter a valid user ID');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to revoke admin privileges from this user?')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/manage-admin-role.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'revoke',
+                        user_id: userId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showSuccess(`Admin privileges revoked from ${data.username}`);
+                    document.getElementById('revokeTargetUser').value = '';
+                    setTimeout(loadAdminUsers, 1500);
+                } else {
+                    showError(data.error || 'Failed to revoke admin');
                 }
             } catch (error) {
                 showError('Connection error');
