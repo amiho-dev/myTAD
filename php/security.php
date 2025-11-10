@@ -363,6 +363,62 @@ class SecurityManager {
         
         return self::sendEmail($email, $subject, $html, true);
     }
+    
+    /**
+     * Check if user is an admin
+     */
+    public static function isUserAdmin($conn, $user_id) {
+        if (!$user_id) {
+            return false;
+        }
+        
+        $stmt = $conn->prepare("
+            SELECT id FROM admins 
+            WHERE user_id = ? AND is_active = 1
+            LIMIT 1
+        ");
+        
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+        
+        return $result->num_rows > 0;
+    }
+    
+    /**
+     * Grant admin privileges to a user
+     */
+    public static function grantAdminRole($conn, $user_id, $created_by = null) {
+        $stmt = $conn->prepare("
+            INSERT INTO admins (user_id, created_by)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE is_active = 1
+        ");
+        
+        $stmt->bind_param("ii", $user_id, $created_by);
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
+    
+    /**
+     * Revoke admin privileges from a user
+     */
+    public static function revokeAdminRole($conn, $user_id) {
+        $stmt = $conn->prepare("
+            UPDATE admins
+            SET is_active = 0
+            WHERE user_id = ?
+        ");
+        
+        $stmt->bind_param("i", $user_id);
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
 }
 
 // Enable CORS for development (adjust for production)

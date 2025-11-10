@@ -64,9 +64,13 @@ try {
     
     $admin_user_id = $result->fetch_assoc()['user_id'];
     
-    // Check if user is admin (you'll need to add is_admin field to users table)
-    // For now, we'll assume any authenticated user can view audit logs
-    // In production, implement proper role-based access control
+    // Check if user is admin
+    if (!SecurityManager::isUserAdmin($conn, $admin_user_id)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Admin privileges required']);
+        $conn->close();
+        exit;
+    }
     
     $filter_user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : null;
     $filter_action = isset($_GET['action']) ? trim($_GET['action']) : null;

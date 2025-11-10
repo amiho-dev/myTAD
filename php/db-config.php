@@ -206,6 +206,42 @@ function initializeDatabase() {
         $errors[] = 'IP whitelist table: ' . $conn->error;
     }
     
+    // Create admin table
+    $sql_admins = "CREATE TABLE IF NOT EXISTS admins (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL UNIQUE,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_is_active (is_active)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    
+    if ($conn->query($sql_admins) === TRUE) {
+        $result_admins = ['success' => true];
+        
+        // Insert first admin user "tad" if they exist
+        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+        $stmt->bind_param("s", $username);
+        $username = "tad";
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+        
+        if ($result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+            $stmt = $conn->prepare("INSERT IGNORE INTO admins (user_id) VALUES (?)");
+            $stmt->bind_param("i", $user['id']);
+            $stmt->execute();
+            $stmt->close();
+        }
+    } else {
+        $result_admins = ['success' => false, 'error' => $conn->error];
+        $errors[] = 'Admins table: ' . $conn->error;
+    }
+    
     $conn->close();
     
     if (count($errors) === 0) {

@@ -1,11 +1,11 @@
 <?php
 /**
- * Admin Security - Disable/Enable User
- * POST /php/admin-user-manage.php
+ * Admin Management - Grant/Revoke Admin Roles
+ * POST /php/manage-admin-role.php
  * 
  * Request:
  * {
- *   "action": "disable|enable|lock|unlock",
+ *   "action": "grant|revoke",
  *   "user_id": 123
  * }
  */
@@ -48,7 +48,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $action = trim($input['action'] ?? '');
 $target_user_id = intval($input['user_id'] ?? 0);
 
-if (!$action || !in_array($action, ['disable', 'enable', 'lock', 'unlock']) || !$target_user_id) {
+if (!$action || !in_array($action, ['grant', 'revoke']) || !$target_user_id) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid action or user_id']);
     exit;
@@ -84,7 +84,7 @@ try {
     }
     
     // Get target user
-    $stmt = $conn->prepare("SELECT id, username, email FROM users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT id, username FROM users WHERE id = ?");
     $stmt->bind_param("i", $target_user_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -99,57 +99,14 @@ try {
     
     $target_user = $result->fetch_assoc();
     
-    // Prevent admin from managing their own account
-    if ($admin_user_id === $target_user_id) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Cannot manage your own account']);
-        $conn->close();
-        exit;
-    }
-    
-    switch ($action) {
-        case 'disable':
-            $stmt = $conn->prepare("UPDATE users SET is_active = 0 WHERE id = ?");
-            $stmt->bind_param("i", $target_user_id);
-            $stmt->execute();
-            $stmt->close();
-            
-            // Invalidate all sessions
-            $stmt = $conn->prepare("UPDATE sessions SET is_active = 0 WHERE user_id = ?");
-            $stmt->bind_param("i", $target_user_id);
-            $stmt->execute();
-            $stmt->close();
-            
-            SecurityManager::logAction($conn, $admin_user_id, 'USER_DISABLED', "User {$target_user['username']} disabled", $client_ip, $user_agent);
-            SecurityManager::logAction($conn, $target_user_id, 'ACCOUNT_DISABLED', "Account disabled by admin", $client_ip, $user_agent);
-            
-            $message = 'User disabled successfully';
-            break;
-            
-        case 'enable':
-            $stmt = $conn->prepare("UPDATE users SET is_active = 1 WHERE id = ?");
-            $stmt->bind_param("i", $target_user_id);
-            $stmt->execute();
-            $stmt->close();
-            
-            SecurityManager::logAction($conn, $admin_user_id, 'USER_ENABLED', "User {$target_user['username']} enabled", $client_ip, $user_agent);
-            
-            $message = 'User enabled successfully';
-            break;
-            
-        case 'lock':
-            SecurityManager::lockUserAccount($conn, $target_user_id, 1440); // 24 hours
-            SecurityManager::logAction($conn, $admin_user_id, 'USER_LOCKED', "User {$target_user['username']} locked", $client_ip, $user_agent);
-            
-            $message = 'User account locked for 24 hours';
-            break;
-            
-        case 'unlock':
-            SecurityManager::unlockUserAccount($conn, $target_user_id);
-            SecurityManager::logAction($conn, $admin_user_id, 'USER_UNLOCKED', "User {$target_user['username']} unlocked", $client_ip, $user_agent);
-            
-            $message = 'User account unlocked';
-            break;
+    if ($action === 'grant') {
+        SecurityManager::grantAdminRole($conn, $target_user_id, $admin_user_id);
+        SecurityManager::logAction($conn, $admin_user_id, 'GRANT_ADMIN', "Granted admin role to {$target_user['username']}", $client_ip, $user_agent);
+        $message = 'Admin privileges granted';
+    } else {
+        SecurityManager::revokeAdminRole($conn, $target_user_id);
+        SecurityManager::logAction($conn, $admin_user_id, 'REVOKE_ADMIN', "Revoked admin role from {$target_user['username']}", $client_ip, $user_agent);
+        $message = 'Admin privileges revoked';
     }
     
     $conn->close();
