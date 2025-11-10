@@ -654,11 +654,15 @@
                     <div id="adminTab" class="tab-content">
                         <div class="title">👑 Admin Management</div>
 
-                        <!-- Users List -->
+                        <!-- User Search -->
                         <div style="margin-bottom: 20px;">
-                            <div style="color: #ffb84d; margin-bottom: 10px; font-weight: 600;">Users List</div>
-                            <div id="usersList" style="max-height: 300px; overflow-y: auto; border: 1px solid rgba(59, 130, 246, 0.3); padding: 15px; border-radius: 15px; background: rgba(59, 130, 246, 0.05);">
-                                <p style="color: #8b7355;">Loading users...</p>
+                            <div style="color: #ffb84d; margin-bottom: 10px; font-weight: 600;">Search User</div>
+                            <div class="form-group">
+                                <label class="form-label">Search by Username or Email</label>
+                                <input type="text" id="userSearchInput" class="form-input" placeholder="Enter username or email to search..." oninput="searchUsers()">
+                            </div>
+                            <div id="searchResults" style="max-height: 300px; overflow-y: auto; border: 1px solid rgba(59, 130, 246, 0.3); padding: 15px; border-radius: 15px; background: rgba(59, 130, 246, 0.05); display: none;">
+                                <p style="color: #8b7355;">Type to search...</p>
                             </div>
                         </div>
 
@@ -694,14 +698,6 @@
                                 <div style="display: flex; gap: 10px;">
                                     <button class="btn" style="background: rgba(239, 68, 68, 0.3); flex: 1;" onclick="handleAdminUserAction('ban')">🚫 Ban User</button>
                                     <button class="btn" style="background: rgba(16, 185, 129, 0.3); flex: 1;" onclick="handleAdminUserAction('unban')">✓ Unban User</button>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Chat Control</label>
-                                <div style="display: flex; gap: 10px;">
-                                    <button class="btn" style="background: rgba(255, 184, 77, 0.3); flex: 1;" onclick="handleAdminUserAction('mute')">🔇 Mute User</button>
-                                    <button class="btn" style="background: #3b82f6; flex: 1;" onclick="handleAdminUserAction('unmute')">🔊 Unmute User</button>
                                 </div>
                             </div>
 
@@ -1124,12 +1120,28 @@
             }
         }
 
-        async function loadAdminUsers() {
+        async function searchUsers() {
+            const searchTerm = document.getElementById('userSearchInput').value.trim();
+            const resultsContainer = document.getElementById('searchResults');
+            
+            if (searchTerm.length < 1) {
+                resultsContainer.style.display = 'none';
+                resultsContainer.innerHTML = '<p style="color: #8b7355;">Type to search...</p>';
+                return;
+            }
+
             try {
-                const response = await fetch(`${API_BASE_URL}/admin-get-users.php`, { credentials: 'include' });
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin-get-users.php?search=${encodeURIComponent(searchTerm)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
                 const data = await response.json();
-                if (data.success) {
-                    let html = `<strong>Total Users: ${data.total}</strong><hr style="margin: 10px 0;">`;
+                
+                if (data.success && data.users && data.users.length > 0) {
+                    let html = `<strong>Found ${data.users.length} user(s)</strong><hr style="margin: 10px 0;">`;
                     data.users.forEach(user => {
                         const status = user.is_active ? '✓ Active' : '🚫 Banned';
                         html += `
@@ -1140,16 +1152,27 @@
                             </div>
                         `;
                     });
-                    document.getElementById('usersList').innerHTML = html;
+                    resultsContainer.innerHTML = html;
+                    resultsContainer.style.display = 'block';
+                } else {
+                    resultsContainer.innerHTML = '<p style="color: #ef4444;">No users found matching your search.</p>';
+                    resultsContainer.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Load users error:', error);
+                console.error('Search error:', error);
+                resultsContainer.innerHTML = '<p style="color: #ef4444;">Error searching users.</p>';
+                resultsContainer.style.display = 'block';
             }
         }
 
         function selectAdminUser(username, userId) {
-            document.getElementById('adminTargetUser').value = username;
+            document.getElementById('adminTargetUser').value = userId;
             showSuccess(`Selected user: ${username}`);
+        }
+
+        async function loadAdminUsers() {
+            // No longer loads all users on page load
+            // Users are searched on demand
         }
 
         async function handleAdminResetPassword() {
@@ -1168,10 +1191,13 @@
             }
 
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-reset-password.php`, {
                     method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ user_id: userId, new_password: newPassword })
                 });
 
@@ -1179,6 +1205,7 @@
                 if (data.success) {
                     showSuccess('Password reset successfully!');
                     document.getElementById('adminNewPassword').value = '';
+                    document.getElementById('adminTargetUser').value = '';
                     setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to reset password');
@@ -1204,10 +1231,13 @@
             }
 
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-update-email.php`, {
                     method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ user_id: userId, email: newEmail })
                 });
 
@@ -1215,6 +1245,7 @@
                 if (data.success) {
                     showSuccess('Email updated successfully!');
                     document.getElementById('adminNewEmail').value = '';
+                    document.getElementById('adminTargetUser').value = '';
                     setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to update email');
@@ -1239,16 +1270,20 @@
             }
 
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-user-action.php`, {
                     method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ user_id: userId, action: action })
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     showSuccess(data.message);
+                    document.getElementById('adminTargetUser').value = '';
                     setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to perform action');
@@ -1279,10 +1314,13 @@
             }
 
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-send-warning.php`, {
                     method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ user_id: userId, warning: warningMessage })
                 });
 
@@ -1290,6 +1328,7 @@
                 if (data.success) {
                     showSuccess(`Warning issued to ${data.username}`);
                     document.getElementById('adminWarningMessage').value = '';
+                    document.getElementById('adminTargetUser').value = '';
                 } else {
                     showError(data.error || 'Failed to send warning');
                 }
