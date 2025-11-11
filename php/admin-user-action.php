@@ -145,10 +145,67 @@ try {
             $update_stmt->bind_param("i", $target_user_id);
             $message = 'User permanently banned';
         }
+        
+        // Execute the ban
+        if ($update_stmt->execute()) {
+            $update_stmt->close();
+            
+            // Get all sessions for this user to record device bans
+            $sessions_stmt = $conn->prepare("
+                SELECT ip_address, user_agent 
+                FROM sessions 
+                WHERE user_id = ? AND is_active = 1
+            ");
+            $sessions_stmt->bind_param("i", $target_user_id);
+            $sessions_stmt->execute();
+            $sessions_result = $sessions_stmt->get_result();
+            $sessions_stmt->close();
+            
+            // Record device ban for each active session's IP and device
+            $ban_duration_hours = isset($data['ban_hours']) ? intval($data['ban_hours']) : null;
+            $is_permanent = !isset($data['ban_hours']) || intval($data['ban_hours']) === 0;
+            
+            while ($session = $sessions_result->fetch_assoc()) {
+                // Create device fingerprint from IP and user agent
+                $device_fingerprint = hash('sha256', $session['ip_address'] . $session['user_agent']);
+                SecurityManager::recordDeviceBan(
+                    $conn, 
+                    $target_user_id, 
+                    $session['ip_address'], 
+                    $device_fingerprint, 
+                    $reason, 
+                    $ban_duration_hours,
+                    $is_permanent,
+                    $session['user_agent']
+                );
+            }
+            
+            // Invalidate all sessions for this user
+            $invalidate_stmt = $conn->prepare("UPDATE sessions SET is_active = 0 WHERE user_id = ?");
+            $invalidate_stmt->bind_param("i", $target_user_id);
+            $invalidate_stmt->execute();
+            $invalidate_stmt->close();
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Failed to perform action: ' . $conn->error]);
+            $conn->close();
+            exit;
+        }
     } else if ($action === 'unban') {
         $update_stmt = $conn->prepare("UPDATE users SET is_active = 1, account_locked_until = NULL WHERE id = ?");
         $update_stmt->bind_param("i", $target_user_id);
         $message = 'User unbanned successfully';
+        
+        // Also clear device bans for this user
+        $device_ban_stmt = $conn->prepare("
+            DELETE FROM device_bans 
+            WHERE user_id = ? OR ip_address IN (
+                SELECT ip_address FROM sessions WHERE user_id = ? LIMIT 100
+            )
+        ");
+        $device_ban_stmt->bind_param("ii", $target_user_id, $target_user_id);
+        $device_ban_stmt->execute();
+        $device_ban_stmt->close();
     } else if ($action === 'mute') {
         // For mute, we would need to add a 'is_muted' column
         // For now, just return success (implementation depends on your game logic)

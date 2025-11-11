@@ -419,6 +419,119 @@ class SecurityManager {
         
         return $result;
     }
+    
+    /**
+     * Create device fingerprint from various client identifiers
+     * This combines IP, User Agent, and Accept-Language for a unique device signature
+     */
+    public static function getDeviceFingerprint() {
+        $components = [
+            self::getClientIP(),
+            self::getUserAgent(),
+            $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'UNKNOWN',
+            $_SERVER['HTTP_ACCEPT'] ?? 'UNKNOWN',
+            $_SERVER['HTTP_ACCEPT_ENCODING'] ?? 'UNKNOWN'
+        ];
+        
+        // Create a hash from combined components
+        return hash('sha256', implode('|', $components));
+    }
+    
+    /**
+     * Get device identifier (simulated MAC address from fingerprint)
+     * Since we can't get real MAC from web, we create a persistent device identifier
+     */
+    public static function getDeviceIdentifier() {
+        // This should be generated and stored on the client-side
+        // For now, we'll use IP + User Agent hash as device identifier
+        return hash('sha256', self::getClientIP() . self::getUserAgent());
+    }
+    
+    /**
+     * Check if a device is banned
+     */
+    public static function isDeviceBanned($conn, $device_fingerprint, $ip_address) {
+        $now = date('Y-m-d H:i:s');
+        
+        $stmt = $conn->prepare("
+            SELECT id, user_id, banned_until, is_permanent
+            FROM device_bans
+            WHERE (device_fingerprint = ? OR ip_address = ?)
+            AND (is_permanent = 1 OR banned_until > ?)
+            LIMIT 1
+        ");
+        
+        $stmt->bind_param("sss", $device_fingerprint, $ip_address, $now);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+        
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Record a device ban
+     */
+    public static function recordDeviceBan($conn, $user_id, $ip_address, $device_fingerprint, $ban_reason = '', $ban_duration_hours = null, $is_permanent = false, $user_agent = null) {
+        $now = date('Y-m-d H:i:s');
+        $banned_until = null;
+        
+        if ($ban_duration_hours && !$is_permanent) {
+            $banned_until = date('Y-m-d H:i:s', time() + ($ban_duration_hours * 3600));
+        }
+        
+        $stmt = $conn->prepare("
+            INSERT INTO device_bans (user_id, ip_address, device_fingerprint, ban_reason, banned_until, is_permanent, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $stmt->bind_param("issssii", $user_id, $ip_address, $device_fingerprint, $ban_reason, $banned_until, $is_permanent, $user_agent);
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
+    
+    /**
+     * Unban a device
+     */
+    public static function unbanDevice($conn, $device_fingerprint = null, $ip_address = null) {
+        if (!$device_fingerprint && !$ip_address) {
+            return false;
+        }
+        
+        if ($device_fingerprint && $ip_address) {
+            $stmt = $conn->prepare("
+                UPDATE device_bans
+                SET is_permanent = 0, banned_until = NULL
+                WHERE device_fingerprint = ? OR ip_address = ?
+            ");
+            $stmt->bind_param("ss", $device_fingerprint, $ip_address);
+        } elseif ($device_fingerprint) {
+            $stmt = $conn->prepare("
+                UPDATE device_bans
+                SET is_permanent = 0, banned_until = NULL
+                WHERE device_fingerprint = ?
+            ");
+            $stmt->bind_param("s", $device_fingerprint);
+        } else {
+            $stmt = $conn->prepare("
+                UPDATE device_bans
+                SET is_permanent = 0, banned_until = NULL
+                WHERE ip_address = ?
+            ");
+            $stmt->bind_param("s", $ip_address);
+        }
+        
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
 }
 
 // Enable CORS for development (adjust for production)

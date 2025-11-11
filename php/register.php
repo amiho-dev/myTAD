@@ -29,6 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Get client info for device ban checking
+require_once 'security.php';
+$client_ip = SecurityManager::getClientIP();
+$user_agent = SecurityManager::getUserAgent();
+$device_fingerprint = SecurityManager::getDeviceFingerprint();
+
 // Get JSON request body
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -78,6 +84,29 @@ if (!empty($errors)) {
 
 try {
     $conn = getDBConnection();
+    
+    // Check if device is banned - prevent registration from banned devices
+    $device_ban = SecurityManager::isDeviceBanned($conn, $device_fingerprint, $client_ip);
+    if ($device_ban) {
+        http_response_code(403);
+        $is_permanent = (bool)$device_ban['is_permanent'];
+        $banned_until = $device_ban['banned_until'];
+        
+        $response = [
+            'error' => 'device_banned',
+            'message' => 'This device is restricted from accessing myTAD',
+            'is_permanent' => $is_permanent
+        ];
+        
+        if (!$is_permanent && $banned_until) {
+            $response['banned_until'] = $banned_until;
+            $response['banned_until_formatted'] = date('F j, Y \a\t g:i A', strtotime($banned_until));
+        }
+        
+        echo json_encode($response);
+        $conn->close();
+        exit;
+    }
     
     // Check if username already exists
     $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");

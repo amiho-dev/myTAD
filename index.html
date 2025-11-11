@@ -860,6 +860,9 @@
                     }
                     showSuccess('Login successful!');
                     setTimeout(checkAuthStatus, 1500);
+                } else if (data.error === 'banned_device' || data.error === 'account_banned') {
+                    // Handle banned device/account
+                    showBannedMessage(data);
                 } else {
                     showError(data.error || 'Login failed');
                 }
@@ -867,6 +870,79 @@
                 console.error('Login error:', error);
                 showError('Connection error');
             }
+        }
+        
+        function showBannedMessage(data) {
+            // Create a custom modal for banned message
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            let banMessage = '';
+            let banUntil = '';
+            
+            if (data.error === 'banned_device') {
+                banMessage = 'Your device access has been restricted';
+                if (!data.is_permanent && data.banned_until_formatted) {
+                    banUntil = `<p style="color: #ffd700; font-weight: bold; margin: 15px 0;">Access restricted until:<br>${data.banned_until_formatted}</p>`;
+                } else if (data.is_permanent) {
+                    banUntil = `<p style="color: #ff6b6b; font-weight: bold; margin: 15px 0;">⛔ PERMANENT RESTRICTION</p>`;
+                }
+            } else if (data.error === 'account_banned') {
+                banMessage = 'Your account access has been restricted';
+                if (!data.is_permanent && data.banned_until_formatted) {
+                    banUntil = `<p style="color: #ffd700; font-weight: bold; margin: 15px 0;">Access restricted until:<br>${data.banned_until_formatted}</p>`;
+                } else if (data.is_permanent) {
+                    banUntil = `<p style="color: #ff6b6b; font-weight: bold; margin: 15px 0;">⛔ PERMANENT RESTRICTION</p>`;
+                }
+            }
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: rgba(20, 20, 30, 0.95);
+                border: 2px solid #ff6b6b;
+                border-radius: 10px;
+                padding: 30px;
+                max-width: 500px;
+                text-align: center;
+                color: #fff;
+                box-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
+            `;
+            
+            content.innerHTML = `
+                <div style="font-size: 32px; margin-bottom: 15px;">⛔</div>
+                <h2 style="margin: 0 0 10px 0; color: #ff6b6b;">${banMessage}</h2>
+                ${banUntil}
+                <div style="border-top: 1px solid #ff6b6b; margin: 20px 0; padding: 20px 0;">
+                    <p style="margin: 10px 0; font-size: 0.9em; color: #ccc;">
+                        <strong>⚠️ Warning:</strong><br>
+                        Creating a new account will result in all of your accounts being permanently banned, and your device will not be able to access myTAD.
+                    </p>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" style="
+                    background: #ff6b6b;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    margin-top: 10px;
+                ">Understand</button>
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
         }
 
         async function handleRegister() {
@@ -896,6 +972,9 @@
                 if (data.success) {
                     showSuccess('Account created! Logging in...');
                     setTimeout(checkAuthStatus, 1500);
+                } else if (data.error === 'device_banned') {
+                    // Handle banned device on registration
+                    showBannedMessage(data);
                 } else {
                     showError(data.error || 'Registration failed');
                 }

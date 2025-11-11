@@ -268,6 +268,33 @@ function initializeDatabase() {
         $errors[] = 'Admins table: ' . $conn->error;
     }
     
+    // Create device bans table for tracking banned devices
+    $sql_device_bans = "CREATE TABLE IF NOT EXISTS device_bans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        ip_address VARCHAR(45) NOT NULL,
+        device_fingerprint VARCHAR(255),
+        mac_address VARCHAR(17),
+        ban_reason TEXT,
+        banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        banned_until TIMESTAMP NULL,
+        is_permanent TINYINT(1) DEFAULT 0,
+        user_agent VARCHAR(255),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_ip_address (ip_address),
+        INDEX idx_device_fingerprint (device_fingerprint),
+        INDEX idx_banned_until (banned_until),
+        INDEX idx_is_permanent (is_permanent)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    
+    if ($conn->query($sql_device_bans) === TRUE) {
+        $result_device_bans = ['success' => true];
+    } else {
+        $result_device_bans = ['success' => false, 'error' => $conn->error];
+        $errors[] = 'Device bans table: ' . $conn->error;
+    }
+    
     $conn->close();
     
     if (count($errors) === 0) {
