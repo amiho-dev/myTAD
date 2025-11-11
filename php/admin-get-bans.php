@@ -89,7 +89,7 @@ try {
             account_locked_until as locked_until_raw
         FROM users 
         WHERE is_active = 0 OR account_locked_until IS NOT NULL
-        ORDER BY account_locked_until DESC NULLS LAST, created_at DESC
+        ORDER BY account_locked_until IS NOT NULL DESC, account_locked_until DESC, created_at DESC
     ");
     
     $stmt->execute();
