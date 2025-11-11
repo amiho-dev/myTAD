@@ -2,16 +2,10 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// Start session
-session_start();
-
-// Check if user is authenticated
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
 // Only allow POST
@@ -21,8 +15,29 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Include database config
+// Include database config and security
 require_once 'db-config.php';
+require_once 'security.php';
+
+// Get token from Authorization header or session
+$token = null;
+
+if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+    $parts = explode(' ', $_SERVER['HTTP_AUTHORIZATION']);
+    if (count($parts) === 2 && $parts[0] === 'Bearer') {
+        $token = $parts[1];
+    }
+}
+
+if (!$token && isset($_SESSION['token'])) {
+    $token = $_SESSION['token'];
+}
+
+if (!$token) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 // Get request data
 $data = json_decode(file_get_contents('php://input'), true);
@@ -42,24 +57,37 @@ if (strlen($warning_message) < 5 || strlen($warning_message) > 500) {
 }
 
 try {
-    // Check if requester is admin (only owner thatoneamiho)
-    $admin_stmt = $conn->prepare("SELECT id FROM users WHERE id = ? AND username = 'thatoneamiho'");
-    $admin_stmt->bind_param("i", $_SESSION['user_id']);
-    $admin_stmt->execute();
-    $admin_result = $admin_stmt->get_result();
-
-    if ($admin_result->num_rows === 0) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Admin access required']);
-        $admin_stmt->close();
+    $conn = getDBConnection();
+    
+    // Get user from token
+    $stmt = $conn->prepare("SELECT user_id FROM sessions WHERE token = ? AND is_active = 1");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $stmt->close();
+    
+    if ($result->num_rows === 0) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+        $conn->close();
         exit;
     }
-    $admin_stmt->close();
+    
+    $user_id = $result->fetch_assoc()['user_id'];
+    
+    // Check if user is admin
+    if (!SecurityManager::isUserAdmin($conn, $user_id)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Admin access required']);
+        $conn->close();
+        exit;
+    }
 
     // Prevent self-warning
-    if ($target_user_id === $_SESSION['user_id']) {
+    if ($target_user_id === $user_id) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Cannot send warning to yourself']);
+        $conn->close();
         exit;
     }
 
@@ -73,6 +101,7 @@ try {
         http_response_code(404);
         echo json_encode(['success' => false, 'error' => 'User not found']);
         $user_stmt->close();
+        $conn->close();
         exit;
     }
 
@@ -82,6 +111,9 @@ try {
     // Log warning (in production, store in a warnings table)
     $timestamp = date('Y-m-d H:i:s');
     error_log("ADMIN WARNING: User ID $target_user_id (${user['username']}) - Message: $warning_message - Timestamp: $timestamp");
+    
+    // Log the action
+    SecurityManager::logAction($conn, $user_id, 'ADMIN_WARNING', "Warning issued to user ID $target_user_id: $warning_message");
 
     http_response_code(200);
     echo json_encode([
@@ -92,12 +124,11 @@ try {
         'email' => $user['email'],
         'timestamp' => $timestamp
     ]);
+    $conn->close();
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Database error occurred']);
+    echo json_encode(['success' => false, 'error' => 'Database error occurred: ' . $e->getMessage()]);
     error_log($e->getMessage());
 }
-
-$conn->close();
 ?>

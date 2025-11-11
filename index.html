@@ -1258,6 +1258,7 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-reset-password.php`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -1270,11 +1271,11 @@
                     showSuccess('Password reset successfully!');
                     document.getElementById('adminNewPassword').value = '';
                     document.getElementById('adminTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to reset password');
                 }
             } catch (error) {
+                console.error('Reset password error:', error);
                 showError('Connection error');
             }
         }
@@ -1298,6 +1299,7 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-update-email.php`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -1310,11 +1312,11 @@
                     showSuccess('Email updated successfully!');
                     document.getElementById('adminNewEmail').value = '';
                     document.getElementById('adminTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to update email');
                 }
             } catch (error) {
+                console.error('Update email error:', error);
                 showError('Connection error');
             }
         }
@@ -1335,8 +1337,14 @@
 
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    showError('Not authenticated. Please log in again.');
+                    return;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/admin-user-action.php`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -1345,15 +1353,17 @@
                 });
 
                 const data = await response.json();
+                console.log('User action response:', response.status, data);
+                
                 if (data.success) {
                     showSuccess(data.message);
                     document.getElementById('adminTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
-                    showError(data.error || 'Failed to perform action');
+                    showError(data.error || `Failed to ${action} user`);
                 }
             } catch (error) {
-                showError('Connection error');
+                console.error('User action error:', error);
+                showError(`Connection error: ${error.message}`);
             }
         }
 
@@ -1381,6 +1391,7 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-send-warning.php`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -1397,6 +1408,7 @@
                     showError(data.error || 'Failed to send warning');
                 }
             } catch (error) {
+                console.error('Warning error:', error);
                 showError('Connection error');
             }
         }
@@ -1419,6 +1431,7 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/manage-admin-role.php`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -1433,11 +1446,11 @@
                 if (data.success) {
                     showSuccess(`${data.username} promoted to admin! ✨`);
                     document.getElementById('promoteTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to promote user');
                 }
             } catch (error) {
+                console.error('Add admin error:', error);
                 showError('Connection error');
             }
         }
@@ -1464,6 +1477,7 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/manage-admin-role.php`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -1478,11 +1492,11 @@
                 if (data.success) {
                     showSuccess(`Admin privileges revoked from ${data.username}`);
                     document.getElementById('revokeTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to revoke admin');
                 }
             } catch (error) {
+                console.error('Revoke admin error:', error);
                 showError('Connection error');
             }
         }
