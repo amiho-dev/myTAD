@@ -206,6 +206,32 @@ function initializeDatabase() {
         $errors[] = 'IP whitelist table: ' . $conn->error;
     }
     
+    // Create notifications/warnings table
+    $sql_notifications = "CREATE TABLE IF NOT EXISTS notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        admin_id INT NULL,
+        type VARCHAR(50) NOT NULL DEFAULT 'warning',
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        is_read TINYINT(1) DEFAULT 0,
+        read_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_type (type),
+        INDEX idx_is_read (is_read),
+        INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    
+    if ($conn->query($sql_notifications) === TRUE) {
+        $result_notifications = ['success' => true];
+    } else {
+        $result_notifications = ['success' => false, 'error' => $conn->error];
+        $errors[] = 'Notifications table: ' . $conn->error;
+    }
+    
     // Create admin table
     $sql_admins = "CREATE TABLE IF NOT EXISTS admins (
         id INT AUTO_INCREMENT PRIMARY KEY,

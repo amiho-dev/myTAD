@@ -625,6 +625,7 @@
                     <div class="tabs">
                         <button class="tab-btn active" onclick="switchMgmtTab('profile')">👤 Profile</button>
                         <button class="tab-btn" onclick="switchMgmtTab('security')">🔐 Security</button>
+                        <button class="tab-btn" onclick="switchMgmtTab('notifications')">🔔 Notifications</button>
                         <button class="tab-btn" onclick="switchMgmtTab('preferences')">⚙ Preferences</button>
                         <button class="tab-btn" id="adminTabBtn" style="display: none;" onclick="switchMgmtTab('admin')">👑 Admin</button>
                     </div>
@@ -664,6 +665,21 @@
                             <div class="title" style="margin-bottom: 15px;">Delete Account</div>
                             <p class="subtitle">This action cannot be undone.</p>
                             <button class="btn" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); width: 100%; margin-top: 10px;" onclick="handleDeleteAccount()">🗑 Delete Account</button>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Tab -->
+                    <div id="notificationsTab" class="tab-content">
+                        <div class="title">🔔 Notifications & Warnings</div>
+                        
+                        <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn" style="background: rgba(59, 130, 246, 0.3); flex: 1;" onclick="loadNotifications('all')">All</button>
+                            <button class="btn" style="background: rgba(59, 130, 246, 0.3); flex: 1;" onclick="loadNotifications('warning')">Warnings</button>
+                            <button class="btn" style="background: rgba(59, 130, 246, 0.3); flex: 1;" onclick="loadNotifications('unread')">Unread</button>
+                        </div>
+
+                        <div id="notificationsContainer" style="max-height: 500px; overflow-y: auto; border: 1px solid rgba(59, 130, 246, 0.3); padding: 15px; border-radius: 15px; background: rgba(59, 130, 246, 0.05);">
+                            <p style="color: #8b7355; text-align: center;">Loading notifications...</p>
                         </div>
                     </div>
 
@@ -973,6 +989,8 @@
         function showManagement() {
             document.getElementById('accountOverview').style.display = 'none';
             document.getElementById('accountManagement').classList.remove('hidden');
+            // Load notifications when switching to management view
+            setTimeout(() => loadNotifications('all'), 500);
         }
 
         function hideManagement() {
@@ -1124,6 +1142,129 @@
             if (prefs.darkTheme !== undefined) {
                 document.getElementById('darkTheme').checked = prefs.darkTheme;
             }
+        }
+
+        // Notification functions
+        async function loadNotifications(filter = 'all') {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('notificationsContainer').innerHTML = '<p style="color: #ef4444;">Not authenticated. Please log in again.</p>';
+                    return;
+                }
+
+                let url = `${API_BASE_URL}/get-notifications.php?limit=50`;
+                
+                if (filter === 'warning') {
+                    url += '&type=warning';
+                } else if (filter === 'unread') {
+                    url += '&unread=1';
+                }
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Notifications response:', data);
+
+                if (data.success && data.notifications) {
+                    if (data.notifications.length === 0) {
+                        document.getElementById('notificationsContainer').innerHTML = '<p style="color: #8b7355; text-align: center;">No notifications yet.</p>';
+                        return;
+                    }
+
+                    let html = `<p style="color: #ffb84d; margin-bottom: 15px;"><strong>${data.notifications.length} notification(s)</strong> - <span style="font-size: 0.9rem;">${data.unread_count} unread</span></p>`;
+                    
+                    data.notifications.forEach(notif => {
+                        const readClass = notif.is_read ? 'opacity: 0.6;' : '';
+                        const readIcon = notif.is_read ? '✓' : '●';
+                        const typeEmoji = notif.type === 'warning' ? '⚠️' : '📢';
+                        const dateStr = new Date(notif.created_at).toLocaleDateString();
+                        const timeStr = new Date(notif.created_at).toLocaleTimeString();
+
+                        html += `
+                            <div style="padding: 12px; margin-bottom: 10px; border-left: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.05); border-radius: 5px; ${readClass}">
+                                <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <div style="color: #ffd700; font-weight: bold; font-size: 0.95rem;">
+                                            ${typeEmoji} ${notif.title}
+                                            ${notif.admin_username ? ` <span style="color: #ffb84d; font-size: 0.85rem;">from ${notif.admin_username}</span>` : ''}
+                                        </div>
+                                        <div style="color: #fff; margin: 8px 0; font-size: 0.9rem; line-height: 1.4;">${escapeHtml(notif.message)}</div>
+                                        <div style="color: #8b7355; font-size: 0.8rem;">${dateStr} at ${timeStr}</div>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        ${!notif.is_read ? `<button class="btn" style="padding: 8px 12px; font-size: 0.85rem; background: rgba(16, 185, 129, 0.3);" onclick="markNotificationRead(${notif.id})">Mark Read</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    document.getElementById('notificationsContainer').innerHTML = html;
+                } else {
+                    document.getElementById('notificationsContainer').innerHTML = '<p style="color: #ef4444;">Error loading notifications: ' + (data.error || 'Unknown error') + '</p>';
+                }
+            } catch (error) {
+                console.error('Load notifications error:', error);
+                document.getElementById('notificationsContainer').innerHTML = '<p style="color: #ef4444;">Error: ' + error.message + '</p>';
+            }
+        }
+
+        async function markNotificationRead(notificationId) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    showError('Not authenticated');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/mark-notification-read.php`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notification_id: notificationId })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Notification marked as read');
+                    // Reload notifications
+                    const filter = document.querySelector('.tabs .tab-btn.active')?.textContent || 'All';
+                    if (filter.includes('Warning')) {
+                        loadNotifications('warning');
+                    } else if (filter.includes('Unread')) {
+                        loadNotifications('unread');
+                    } else {
+                        loadNotifications('all');
+                    }
+                } else {
+                    showError(data.error || 'Failed to mark notification as read');
+                }
+            } catch (error) {
+                console.error('Mark read error:', error);
+                showError('Connection error');
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
         }
 
         // Admin functions

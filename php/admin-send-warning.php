@@ -112,6 +112,22 @@ try {
     $timestamp = date('Y-m-d H:i:s');
     error_log("ADMIN WARNING: User ID $target_user_id (${user['username']}) - Message: $warning_message - Timestamp: $timestamp");
     
+    // Store warning in notifications table
+    $notification_stmt = $conn->prepare("
+        INSERT INTO notifications (user_id, admin_id, type, title, message)
+        VALUES (?, ?, 'warning', 'Admin Warning', ?)
+    ");
+    $notification_stmt->bind_param("iis", $target_user_id, $user_id, $warning_message);
+    
+    if (!$notification_stmt->execute()) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to store warning: ' . $conn->error]);
+        $notification_stmt->close();
+        $conn->close();
+        exit;
+    }
+    $notification_stmt->close();
+    
     // Log the action
     SecurityManager::logAction($conn, $user_id, 'ADMIN_WARNING', "Warning issued to user ID $target_user_id: $warning_message");
 
