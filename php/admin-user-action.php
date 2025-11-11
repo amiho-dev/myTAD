@@ -86,6 +86,32 @@ try {
         exit;
     }
 
+    // Get target username to check for owner protection
+    $target_stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
+    $target_stmt->bind_param("i", $target_user_id);
+    $target_stmt->execute();
+    $target_result = $target_stmt->get_result();
+    $target_user = $target_result->fetch_assoc();
+    $target_stmt->close();
+
+    // Prevent regular admins from banning/muting the owner (thatoneamiho)
+    if ($target_user['username'] === 'thatoneamiho' && in_array($action, ['ban', 'mute'])) {
+        // Check if the current user is the owner
+        $current_user_stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
+        $current_user_stmt->bind_param("i", $user_id);
+        $current_user_stmt->execute();
+        $current_user_result = $current_user_stmt->get_result();
+        $current_user = $current_user_result->fetch_assoc();
+        $current_user_stmt->close();
+
+        if ($current_user['username'] !== 'thatoneamiho') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'You do not have permission to perform this action on this user']);
+            $conn->close();
+            exit;
+        }
+    }
+
     // Verify target user exists
     $user_check = $conn->prepare("SELECT id FROM users WHERE id = ?");
     $user_check->bind_param("i", $target_user_id);
@@ -102,11 +128,25 @@ try {
 
     // Perform the action
     if ($action === 'ban') {
-        $update_stmt = $conn->prepare("UPDATE users SET is_active = 0 WHERE id = ?");
-        $update_stmt->bind_param("i", $target_user_id);
-        $message = 'User banned successfully';
+        // Parse ban duration if provided
+        $locked_until = null;
+        if (isset($data['ban_hours']) && is_numeric($data['ban_hours']) && $data['ban_hours'] > 0) {
+            $ban_hours = intval($data['ban_hours']);
+            $locked_until = date('Y-m-d H:i:s', strtotime("+$ban_hours hours"));
+        }
+        
+        if ($locked_until) {
+            $update_stmt = $conn->prepare("UPDATE users SET is_active = 0, account_locked_until = ? WHERE id = ?");
+            $update_stmt->bind_param("si", $locked_until, $target_user_id);
+            $message = "User banned until " . date('H:i d.m.Y', strtotime($locked_until));
+        } else {
+            // Permanent ban
+            $update_stmt = $conn->prepare("UPDATE users SET is_active = 0, account_locked_until = NULL WHERE id = ?");
+            $update_stmt->bind_param("i", $target_user_id);
+            $message = 'User permanently banned';
+        }
     } else if ($action === 'unban') {
-        $update_stmt = $conn->prepare("UPDATE users SET is_active = 1 WHERE id = ?");
+        $update_stmt = $conn->prepare("UPDATE users SET is_active = 1, account_locked_until = NULL WHERE id = ?");
         $update_stmt->bind_param("i", $target_user_id);
         $message = 'User unbanned successfully';
     } else if ($action === 'mute') {

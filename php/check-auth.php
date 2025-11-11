@@ -21,6 +21,7 @@
  */
 
 require_once 'db-config.php';
+require_once 'security.php';
 
 header('Content-Type: application/json');
 
@@ -31,6 +32,33 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check if user is authenticated via session
 if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    try {
+        $conn = getDBConnection();
+        
+        // Verify user still exists, is active, and not locked
+        $stmt = $conn->prepare("SELECT id, username, email, is_active, account_locked_until FROM users WHERE id = ?");
+        $stmt->bind_param("i", $_SESSION['user_id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+        
+        if ($result->num_rows === 0 || !$result->fetch_assoc()['is_active']) {
+            // User doesn't exist or is inactive (banned)
+            session_destroy();
+            http_response_code(401);
+            echo json_encode(['authenticated' => false, 'reason' => 'Account disabled']);
+            $conn->close();
+            exit;
+        }
+        
+        $conn->close();
+    } catch (Exception $e) {
+        session_destroy();
+        http_response_code(401);
+        echo json_encode(['authenticated' => false]);
+        exit;
+    }
+    
     http_response_code(200);
     echo json_encode([
         'authenticated' => true,

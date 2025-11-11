@@ -745,6 +745,10 @@
 
                             <div class="form-group">
                                 <label class="form-label">Account Status</label>
+                                <div style="margin-bottom: 10px;">
+                                    <label class="form-label" style="margin-top: 0;">Ban Duration (hours, leave empty for permanent)</label>
+                                    <input type="number" id="adminBanHours" class="form-input" placeholder="e.g., 24 for 1 day, 168 for 1 week" min="1" max="8760">
+                                </div>
                                 <div style="display: flex; gap: 10px;">
                                     <button class="btn" style="background: rgba(239, 68, 68, 0.3); flex: 1;" onclick="handleAdminUserAction('ban')">🚫 Ban User</button>
                                     <button class="btn" style="background: rgba(16, 185, 129, 0.3); flex: 1;" onclick="handleAdminUserAction('unban')">✓ Unban User</button>
@@ -755,6 +759,17 @@
                                 <label class="form-label">Send Warning</label>
                                 <textarea id="adminWarningMessage" class="form-input" placeholder="Warning message (5-500 chars)" style="min-height: 60px; resize: vertical;"></textarea>
                                 <button class="btn" style="width: 100%; margin-top: 10px;" onclick="handleAdminSendWarning()">⚠ Issue Warning</button>
+                            </div>
+                        </div>
+
+                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--glass-border);">
+
+                        <!-- View Bans -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="color: #ffb84d; margin-bottom: 15px; font-weight: 600;">🚫 Banned Users</div>
+                            <button class="btn" style="width: 100%; background: rgba(239, 68, 68, 0.2);" onclick="loadBanList()">📋 View All Bans</button>
+                            <div id="banListContainer" style="max-height: 400px; overflow-y: auto; margin-top: 15px; border: 1px solid rgba(239, 68, 68, 0.3); padding: 15px; border-radius: 15px; background: rgba(239, 68, 68, 0.05); display: none;">
+                                <p style="color: #8b7355;">Loading...</p>
                             </div>
                         </div>
 
@@ -1483,6 +1498,19 @@
                     return;
                 }
 
+                const payload = {
+                    user_id: userId,
+                    action: action
+                };
+
+                // Add ban hours if banning
+                if (action === 'ban') {
+                    const banHours = document.getElementById('adminBanHours').value;
+                    if (banHours && parseInt(banHours) > 0) {
+                        payload.ban_hours = parseInt(banHours);
+                    }
+                }
+
                 const response = await fetch(`${API_BASE_URL}/admin-user-action.php`, {
                     method: 'POST',
                     credentials: 'include',
@@ -1490,7 +1518,7 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ user_id: userId, action: action })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
@@ -1499,6 +1527,7 @@
                 if (data.success) {
                     showSuccess(data.message);
                     document.getElementById('adminTargetUser').value = '';
+                    document.getElementById('adminBanHours').value = '';
                 } else {
                     showError(data.error || `Failed to ${action} user`);
                 }
@@ -1639,6 +1668,66 @@
             } catch (error) {
                 console.error('Revoke admin error:', error);
                 showError('Connection error');
+            }
+        }
+
+        async function loadBanList() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    showError('Not authenticated');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/admin-get-bans.php`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Ban list response:', data);
+
+                if (data.success) {
+                    const container = document.getElementById('banListContainer');
+                    
+                    if (data.bans.length === 0) {
+                        container.innerHTML = '<p style="color: #10b981; text-align: center;">✓ No banned users</p>';
+                        container.style.display = 'block';
+                        return;
+                    }
+
+                    let html = `<p style="color: #ffb84d; margin-bottom: 15px;"><strong>${data.total} banned user(s)</strong></p>`;
+                    
+                    data.bans.forEach(ban => {
+                        let statusColor = '#ef4444';
+                        if (ban.ban_status.includes('Expired')) statusColor = '#10b981';
+                        
+                        html += `
+                            <div style="padding: 12px; margin-bottom: 10px; border-left: 3px solid ${statusColor}; background: rgba(239, 68, 68, 0.05); border-radius: 5px;">
+                                <div style="color: #ffd700; font-weight: bold; margin-bottom: 5px;">
+                                    🚫 ${ban.username} (ID: ${ban.id})
+                                </div>
+                                <div style="color: #ffb84d; font-size: 0.9rem; margin-bottom: 3px;">Status: ${ban.ban_status}</div>
+                                <div style="color: #fff; font-size: 0.85rem; margin-bottom: 3px;">📧 ${ban.email}</div>
+                                ${ban.locked_until_formatted ? `<div style="color: #ff6b6b; font-size: 0.85rem; margin-bottom: 3px;">⏰ Locked until: ${ban.locked_until_formatted}</div>` : ''}
+                                <div style="color: #8b7355; font-size: 0.8rem;">Created: ${new Date(ban.created_at).toLocaleDateString()}</div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                    container.style.display = 'block';
+                } else {
+                    document.getElementById('banListContainer').innerHTML = '<p style="color: #ef4444;">Error: ' + (data.error || 'Unknown error') + '</p>';
+                    document.getElementById('banListContainer').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ban list error:', error);
+                document.getElementById('banListContainer').innerHTML = '<p style="color: #ef4444;">Error: ' + error.message + '</p>';
+                document.getElementById('banListContainer').style.display = 'block';
             }
         }
 
