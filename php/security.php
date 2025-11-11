@@ -453,6 +453,13 @@ class SecurityManager {
     public static function isDeviceBanned($conn, $device_fingerprint, $ip_address) {
         $now = date('Y-m-d H:i:s');
         
+        // Check if device_bans table exists first
+        $table_check = $conn->query("SELECT 1 FROM device_bans LIMIT 1");
+        if ($table_check === FALSE) {
+            // Table doesn't exist yet, no bans can exist
+            return null;
+        }
+        
         $stmt = $conn->prepare("
             SELECT id, user_id, banned_until, is_permanent
             FROM device_bans
@@ -460,6 +467,11 @@ class SecurityManager {
             AND (is_permanent = 1 OR banned_until > ?)
             LIMIT 1
         ");
+        
+        if (!$stmt) {
+            // Prepare failed, return null (table may not exist)
+            return null;
+        }
         
         $stmt->bind_param("sss", $device_fingerprint, $ip_address, $now);
         $stmt->execute();
@@ -489,6 +501,11 @@ class SecurityManager {
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
         
+        if (!$stmt) {
+            // Table may not exist, return false silently
+            return false;
+        }
+        
         $stmt->bind_param("issssii", $user_id, $ip_address, $device_fingerprint, $ban_reason, $banned_until, $is_permanent, $user_agent);
         $result = $stmt->execute();
         $stmt->close();
@@ -510,6 +527,7 @@ class SecurityManager {
                 SET is_permanent = 0, banned_until = NULL
                 WHERE device_fingerprint = ? OR ip_address = ?
             ");
+            if (!$stmt) return false;
             $stmt->bind_param("ss", $device_fingerprint, $ip_address);
         } elseif ($device_fingerprint) {
             $stmt = $conn->prepare("
@@ -517,6 +535,7 @@ class SecurityManager {
                 SET is_permanent = 0, banned_until = NULL
                 WHERE device_fingerprint = ?
             ");
+            if (!$stmt) return false;
             $stmt->bind_param("s", $device_fingerprint);
         } else {
             $stmt = $conn->prepare("
@@ -524,6 +543,7 @@ class SecurityManager {
                 SET is_permanent = 0, banned_until = NULL
                 WHERE ip_address = ?
             ");
+            if (!$stmt) return false;
             $stmt->bind_param("s", $ip_address);
         }
         
