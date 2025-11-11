@@ -479,6 +479,40 @@
         .hidden {
             display: none !important;
         }
+
+        #adminTab {
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        #adminTab::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #adminTab::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        #adminTab::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.4);
+            border-radius: 10px;
+        }
+
+        #adminTab::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.6);
+        }
+
+        .container {
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .card {
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -789,6 +823,10 @@
 
                 const data = await response.json();
                 if (data.success) {
+                    // Store token in localStorage for admin functions
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
                     showSuccess('Login successful!');
                     setTimeout(checkAuthStatus, 1500);
                 } else {
@@ -842,6 +880,8 @@
                     method: 'POST',
                     credentials: 'include'
                 });
+                // Clear token from localStorage
+                localStorage.removeItem('token');
                 showSuccess('Logged out');
                 setTimeout(() => checkAuthStatus(), 1500);
             } catch (error) {
@@ -1090,12 +1130,23 @@
         async function checkAdmin(username) {
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    console.log('No token found for admin check');
+                    document.getElementById('adminTabBtn').style.display = 'none';
+                    document.getElementById('ownerOnlySection').style.display = 'none';
+                    return;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/check-admin.php`, {
+                    method: 'GET',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
+                
                 const data = await response.json();
+                console.log('Admin check response:', data);
                 
                 if (data.is_admin) {
                     // Show admin panel
@@ -1106,8 +1157,6 @@
                     if (username === 'thatoneamiho') {
                         document.getElementById('ownerOnlySection').style.display = 'block'; // Show owner controls
                     }
-                    
-                    loadAdminUsers();
                 } else {
                     // Hide admin panel
                     document.getElementById('adminTabBtn').style.display = 'none';
@@ -1132,13 +1181,28 @@
 
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    resultsContainer.innerHTML = '<p style="color: #ef4444;">Error: Not authenticated. Please log in again.</p>';
+                    resultsContainer.style.display = 'block';
+                    return;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/admin-get-users.php?search=${encodeURIComponent(searchTerm)}`, {
+                    method: 'GET',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 
                 const data = await response.json();
+                console.log('Search response:', response.status, data);
+                
+                if (!response.ok) {
+                    resultsContainer.innerHTML = `<p style="color: #ef4444;">Error: ${data.error || 'Request failed'}</p>`;
+                    resultsContainer.style.display = 'block';
+                    return;
+                }
                 
                 if (data.success && data.users && data.users.length > 0) {
                     let html = `<strong>Found ${data.users.length} user(s)</strong><hr style="margin: 10px 0;">`;
@@ -1160,7 +1224,7 @@
                 }
             } catch (error) {
                 console.error('Search error:', error);
-                resultsContainer.innerHTML = '<p style="color: #ef4444;">Error searching users.</p>';
+                resultsContainer.innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
                 resultsContainer.style.display = 'block';
             }
         }
