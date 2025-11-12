@@ -1495,13 +1495,58 @@
         }
 
         // Ban Exclusion Functions
+        async function debugToken() {
+            try {
+                const token = localStorage.getItem('token');
+                console.log('Debugging token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+
+                const response = await fetch(`${API_BASE_URL}/debug-token.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                console.log('DEBUG TOKEN INFO:');
+                console.log(JSON.stringify(data, null, 2));
+                alert('Debug info logged to console (F12)');
+            } catch (error) {
+                console.error('Debug error:', error);
+            }
+        }
+
+        async function testHeaders() {
+            try {
+                const token = localStorage.getItem('token');
+                console.log('Testing with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+
+                const response = await fetch(`${API_BASE_URL}/test-headers.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                console.log('TEST HEADERS RESPONSE:', JSON.stringify(data, null, 2));
+            } catch (error) {
+                console.error('Test error:', error);
+            }
+        }
+
         async function loadBanExclusionList() {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">No authentication token found</p>';
+                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">No authentication token found in localStorage</p>';
+                    console.error('No token in localStorage');
                     return;
                 }
+
+                console.log('Sending token: ' + token.substring(0, 20) + '...');
 
                 const response = await fetch(`${API_BASE_URL}/manage-ban-exclusions.php`, {
                     method: 'GET',
@@ -1511,13 +1556,20 @@
                     }
                 });
 
-                if (!response.ok) {
-                    console.error('Response status:', response.status);
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                console.log('Response status:', response.status);
+                const responseText = await response.text();
+                console.log('Response body:', responseText);
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Failed to parse JSON:', responseText);
+                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Invalid response from server</p>';
+                    return;
                 }
 
-                const data = await response.json();
-                if (data.success) {
+                if (response.ok && data.success) {
                     const listContainer = document.getElementById('banExclusionList');
                     
                     if (data.exclusions && data.exclusions.length > 0) {
@@ -1538,11 +1590,11 @@
                     }
                 } else {
                     console.error('API Error:', data.error);
-                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error: ' + (data.error || 'Unknown error') + '</p>';
+                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error: ' + (data.error || `HTTP ${response.status}`) + '</p>';
                 }
             } catch (error) {
                 console.error('Error loading ban exclusion list:', error);
-                document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error loading protected users: ' + error.message + '</p>';
+                document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error: ' + error.message + '</p>';
             }
         }
 

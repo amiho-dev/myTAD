@@ -4,23 +4,60 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Authorization, Content-Type');
 
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 session_start();
 
 require_once 'db-config.php';
 require_once 'security.php';
 
 try {
+    // Debug: Log all headers received
+    error_log('=== REQUEST HEADERS ===');
+    foreach ($_SERVER as $key => $value) {
+        if (strpos($key, 'HTTP_') === 0) {
+            error_log($key . ': ' . substr($value, 0, 50));
+        }
+    }
+    error_log('REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD']);
+    
     // Get the Bearer token from Authorization header
-    $headers = getallheaders();
-    $auth_header = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $auth_header = '';
+    
+    // Try multiple ways to get Authorization header
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $auth_header = $_SERVER['HTTP_AUTHORIZATION'];
+        error_log('Token from HTTP_AUTHORIZATION');
+    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $auth_header = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        error_log('Token from REDIRECT_HTTP_AUTHORIZATION');
+    } elseif (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        if (isset($headers['Authorization'])) {
+            $auth_header = $headers['Authorization'];
+            error_log('Token from getallheaders() Authorization');
+        } elseif (isset($headers['authorization'])) {
+            $auth_header = $headers['authorization'];
+            error_log('Token from getallheaders() authorization (lowercase)');
+        }
+    }
+    
+    error_log('Auth header value: ' . $auth_header);
     
     if (!preg_match('/Bearer\s+(.+)/', $auth_header, $matches)) {
         http_response_code(401);
+        error_log('ERROR: No bearer token found in header');
+        error_log('Auth header: ' . $auth_header);
         echo json_encode(['success' => false, 'error' => 'Missing or invalid token']);
         exit;
     }
     
-    $token = $matches[1];
+    $token = trim($matches[1]);
+    error_log('TOKEN FOUND: ' . substr($token, 0, 20) . '...');
     
     // Verify token in database
     $stmt = $conn->prepare("
@@ -28,10 +65,20 @@ try {
         WHERE token = ? AND expires_at > NOW() 
         LIMIT 1
     ");
+    
+    if (!$stmt) {
+        error_log('Prepare failed: ' . $conn->error);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Database error']);
+        exit;
+    }
+    
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $token_result = $stmt->get_result();
     $stmt->close();
+    
+    error_log('Token lookup returned ' . $token_result->num_rows . ' rows');
     
     if ($token_result->num_rows === 0) {
         http_response_code(401);
