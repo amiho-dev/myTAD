@@ -1163,7 +1163,8 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/check-admin.php`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token  // Fallback for Cloudflare/proxies
                     }
                 });
                 const data = await response.json();
@@ -1205,7 +1206,8 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-get-users.php?search=${encodeURIComponent(searchTerm)}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token  // Fallback for Cloudflare/proxies
                     }
                 });
                 
@@ -1267,6 +1269,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ user_id: userId, new_password: newPassword })
@@ -1307,6 +1310,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ user_id: userId, email: newEmail })
@@ -1346,6 +1350,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ user_id: userId, action: action })
@@ -1390,6 +1395,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ user_id: userId, warning: warningMessage })
@@ -1428,6 +1434,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -1473,6 +1480,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -1659,6 +1667,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -1693,6 +1702,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
