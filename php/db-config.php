@@ -242,6 +242,44 @@ function initializeDatabase() {
         $errors[] = 'Admins table: ' . $conn->error;
     }
     
+    // Create ban_exclusions table
+    $sql_ban_exclusions = "CREATE TABLE IF NOT EXISTS ban_exclusions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL UNIQUE,
+        reason VARCHAR(500),
+        added_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_user_id (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    
+    if ($conn->query($sql_ban_exclusions) === TRUE) {
+        $result_ban_exclusions = ['success' => true];
+        
+        // Add initial exclusions: tad and thatoneamiho
+        $exclusion_users = ['tad', 'thatoneamiho'];
+        foreach ($exclusion_users as $excl_user) {
+            $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+            $stmt->bind_param("s", $excl_user);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $stmt->close();
+            
+            if ($result->num_rows > 0) {
+                $user = $result->fetch_assoc();
+                $reason = 'Protected admin account';
+                $stmt = $conn->prepare("INSERT IGNORE INTO ban_exclusions (user_id, reason) VALUES (?, ?)");
+                $stmt->bind_param("is", $user['id'], $reason);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+    } else {
+        $result_ban_exclusions = ['success' => false, 'error' => $conn->error];
+        $errors[] = 'Ban exclusions table: ' . $conn->error;
+    }
+    
     $conn->close();
     
     if (count($errors) === 0) {

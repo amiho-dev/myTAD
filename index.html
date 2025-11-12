@@ -710,6 +710,33 @@
 
                         <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--glass-border);">
 
+                        <!-- Ban Exclusion List Management -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="color: #ffb84d; margin-bottom: 15px; font-weight: 600;">🛡️ Ban Protection List</div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Add User to Protection</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" id="banExclusionUser" class="form-input" placeholder="User ID or username" style="flex: 1;">
+                                    <button class="btn" style="background: rgba(16, 185, 129, 0.3); flex-shrink: 0;" onclick="handleAddBanExclusion()">🛡️ Protect</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Reason for Protection</label>
+                                <textarea id="banExclusionReason" class="form-input" placeholder="Optional: Reason why this user is protected" style="min-height: 40px; resize: vertical;"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Protected Users</label>
+                                <div id="banExclusionList" style="max-height: 300px; overflow-y: auto; border: 1px solid rgba(16, 185, 129, 0.3); padding: 15px; border-radius: 15px; background: rgba(16, 185, 129, 0.05);">
+                                    <p style="color: #8b7355;">Loading protected users...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--glass-border);">
+
                         <!-- Owner Only: Add Admin Section -->
                         <div id="ownerOnlySection" style="margin-bottom: 20px; display: none;">
                             <div style="color: #ffd700; margin-bottom: 15px; font-weight: 600;">👑 Owner Controls - Manage Admins</div>
@@ -945,6 +972,11 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tab + 'Tab').classList.add('active');
             event.target.classList.add('active');
+            
+            // Load ban exclusion list when admin tab is opened
+            if (tab === 'admin') {
+                loadBanExclusionList();
+            }
         }
 
         async function handleUpdateUsername() {
@@ -1417,6 +1449,120 @@
                     setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to revoke admin');
+                }
+            } catch (error) {
+                showError('Connection error');
+            }
+        }
+
+        // Ban Exclusion Functions
+        async function loadBanExclusionList() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/manage-ban-exclusions.php`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const listContainer = document.getElementById('banExclusionList');
+                    
+                    if (data.exclusions && data.exclusions.length > 0) {
+                        let html = `<strong>Protected Users (${data.total})</strong><hr style="margin: 10px 0;">`;
+                        data.exclusions.forEach(exclusion => {
+                            html += `
+                                <div style="padding: 10px; margin-bottom: 8px; border-left: 3px solid #10b981; background: rgba(16, 185, 129, 0.05); border-radius: 8px;">
+                                    <div style="color: #10b981; font-weight: bold;">${exclusion.username}</div>
+                                    <div style="color: #a0a0a0; font-size: 0.85rem;">ID: ${exclusion.user_id} • Email: ${exclusion.email}</div>
+                                    <div style="color: #8b7355; font-size: 0.8rem; margin-top: 5px;">Reason: ${exclusion.reason || 'N/A'}</div>
+                                    <button class="btn" style="background: rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 5px 10px; width: 100%; margin-top: 8px;" onclick="handleRemoveBanExclusion(${exclusion.user_id}, '${exclusion.username}')">❌ Remove Protection</button>
+                                </div>
+                            `;
+                        });
+                        listContainer.innerHTML = html;
+                    } else {
+                        listContainer.innerHTML = '<p style="color: #8b7355;">No users in ban protection list.</p>';
+                    }
+                } else {
+                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error loading protected users.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading ban exclusion list:', error);
+                document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error loading protected users.</p>';
+            }
+        }
+
+        async function handleAddBanExclusion() {
+            const targetUser = document.getElementById('banExclusionUser').value.trim();
+            const reason = document.getElementById('banExclusionReason').value.trim();
+
+            if (!targetUser) {
+                showError('Please enter a user ID or username');
+                return;
+            }
+
+            let userId = parseInt(targetUser) || null;
+            if (!userId) {
+                showError('Please enter a valid user ID');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/manage-ban-exclusions.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'add',
+                        user_id: userId,
+                        reason: reason
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showSuccess(data.message);
+                    document.getElementById('banExclusionUser').value = '';
+                    document.getElementById('banExclusionReason').value = '';
+                    setTimeout(loadBanExclusionList, 1000);
+                } else {
+                    showError(data.error || 'Failed to add ban exclusion');
+                }
+            } catch (error) {
+                showError('Connection error');
+            }
+        }
+
+        async function handleRemoveBanExclusion(userId, username) {
+            if (!confirm(`Remove ${username} from ban protection list?`)) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/manage-ban-exclusions.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'remove',
+                        user_id: userId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showSuccess(data.message);
+                    setTimeout(loadBanExclusionList, 1000);
+                } else {
+                    showError(data.error || 'Failed to remove ban exclusion');
                 }
             } catch (error) {
                 showError('Connection error');

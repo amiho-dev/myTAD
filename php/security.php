@@ -419,6 +419,82 @@ class SecurityManager {
         
         return $result;
     }
+    
+    /**
+     * Check if user is in ban exclusion list
+     */
+    public static function isBanExcluded($conn, $user_id) {
+        $stmt = $conn->prepare("
+            SELECT id FROM ban_exclusions 
+            WHERE user_id = ?
+            LIMIT 1
+        ");
+        
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result()->num_rows > 0;
+        $stmt->close();
+        
+        return $result;
+    }
+    
+    /**
+     * Add user to ban exclusion list
+     */
+    public static function addBanExclusion($conn, $user_id, $reason = '', $added_by = null) {
+        $stmt = $conn->prepare("
+            INSERT INTO ban_exclusions (user_id, reason, added_by)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+                reason = VALUES(reason),
+                added_by = VALUES(added_by)
+        ");
+        
+        $stmt->bind_param("isi", $user_id, $reason, $added_by);
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
+    
+    /**
+     * Remove user from ban exclusion list
+     */
+    public static function removeBanExclusion($conn, $user_id) {
+        $stmt = $conn->prepare("
+            DELETE FROM ban_exclusions
+            WHERE user_id = ?
+        ");
+        
+        $stmt->bind_param("i", $user_id);
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
+    
+    /**
+     * Get all users in ban exclusion list
+     */
+    public static function getBanExclusionList($conn) {
+        $stmt = $conn->prepare("
+            SELECT be.id, be.user_id, u.username, u.email, be.reason, be.created_at, be.added_by
+            FROM ban_exclusions be
+            JOIN users u ON be.user_id = u.id
+            ORDER BY be.created_at DESC
+        ");
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $exclusions = [];
+        
+        while ($row = $result->fetch_assoc()) {
+            $exclusions[] = $row;
+        }
+        
+        $stmt->close();
+        return $exclusions;
+    }
 }
 
 // Enable CORS for development (adjust for production)

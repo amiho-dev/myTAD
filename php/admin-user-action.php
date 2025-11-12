@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Include database config
 require_once 'db-config.php';
+require_once 'security.php';
 
 // Get request data
 $data = json_decode(file_get_contents('php://input'), true);
@@ -58,6 +59,12 @@ try {
         exit;
     }
 
+    // Check if user is in ban exclusion list (only for ban action)
+    if ($action === 'ban' && SecurityManager::isBanExcluded($conn, $target_user_id)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'This user is protected and cannot be banned']);
+        exit;
+    }
     // Check if we need to add columns for bans/mutes (simplified - using is_active flag)
     if ($action === 'ban') {
         $update_stmt = $conn->prepare("UPDATE users SET is_active = 0 WHERE id = ?");
