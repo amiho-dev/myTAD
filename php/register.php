@@ -146,13 +146,35 @@ try {
     if ($stmt->execute()) {
         $user_id = $stmt->insert_id;
         
-        http_response_code(201);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Account created successfully',
-            'user_id' => $user_id,
-            'username' => $username
-        ]);
+        // AUTO-LOGIN: Create session token for new user
+        $token = SecurityManager::generateToken();
+        $expires_at = date('Y-m-d H:i:s', time() + (24 * 60 * 60)); // 24 hours
+        
+        $session_stmt = $conn->prepare("
+            INSERT INTO sessions (user_id, token, expires_at)
+            VALUES (?, ?, ?)
+        ");
+        $session_stmt->bind_param("iss", $user_id, $token, $expires_at);
+        
+        if ($session_stmt->execute()) {
+            // Log the registration/login action
+            SecurityManager::logAction($conn, $user_id, 'ACCOUNT_CREATED', 'User registered and auto-logged in', $client_ip);
+            
+            $session_stmt->close();
+            
+            http_response_code(201);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Account created successfully and logged in',
+                'user_id' => $user_id,
+                'username' => $username,
+                'token' => $token,
+                'authenticated' => true
+            ]);
+        } else {
+            // Session creation failed, but account was created
+            throw new Exception('Account created but session creation failed: ' . $session_stmt->error);
+        }
     } else {
         throw new Exception('Failed to create account: ' . $stmt->error);
     }

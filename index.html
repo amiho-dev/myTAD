@@ -852,8 +852,20 @@
 
                 const data = await response.json();
                 if (data.success) {
+                    // Store the token if provided by backend
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
+                    
                     showSuccess('Account created! Logging in...');
-                    setTimeout(checkAuthStatus, 1500);
+                    
+                    // Clear registration form
+                    document.getElementById('registerUsername').value = '';
+                    document.getElementById('registerEmail').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    
+                    // Redirect to account section
+                    setTimeout(() => checkAuthStatus(), 1500);
                 } else {
                     showError(data.error || 'Registration failed');
                 }
