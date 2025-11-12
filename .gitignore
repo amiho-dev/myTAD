@@ -25,5 +25,6 @@ temp/
 # Node modules (if using npm)
 node_modules/
 
-# Setup file (delete after configuration)
-setup.php
+# Setup file (only in root, not in php directory)
+/setup.php
+
