@@ -4,786 +4,1541 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>myTAD - Account Management</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com/">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --black: #000000;
-            --gradient-start: #ffffff;
-            --gradient-end: #3b82f6;
+            --bg-base: #040610;
+            --bg-alt: #070c1a;
             --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-shadow: rgba(0, 0, 0, 0.5);
-            --accent-blue: #3b82f6;
-            --accent-purple: #8b5cf6;
-            --success: #10b981;
-            --error: #ef4444;
-            --warning: #f59e0b;
+            --text-secondary: rgba(255, 255, 255, 0.72);
+            --text-muted: rgba(255, 255, 255, 0.55);
+            --accent-primary: #5c7cfa;
+            --accent-secondary: #9d6bff;
+            --accent-tertiary: #f472b6;
+            --accent-success: #34d399;
+            --accent-warning: #fbbf24;
+            --accent-danger: #f87171;
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-light: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.16);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --shadow-lg: 0 28px 90px rgba(10, 12, 28, 0.65);
+            --shadow-md: 0 18px 40px rgba(10, 12, 28, 0.55);
+            --shadow-soft: 0 12px 30px rgba(92, 124, 250, 0.25);
+            --radius-lg: 30px;
+            --radius-md: 22px;
+            --radius-sm: 16px;
+            --transition-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
+        *, *::before, *::after {
             box-sizing: border-box;
         }
 
         html, body {
-            width: 100%;
             height: 100%;
-            overflow: hidden;
         }
 
         body {
+            margin: 0;
             font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--black);
+            background: radial-gradient(circle at top left, rgba(92, 124, 250, 0.25), transparent 58%),
+                        radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.22), transparent 62%),
+                        linear-gradient(135deg, var(--bg-base), var(--bg-alt));
             color: var(--text-primary);
-            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            position: relative;
             overflow: hidden;
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="rgba(59, 130, 246, 0.8)" stroke-width="1" stroke-linejoin="round"><path d="M4 4 L4 18 L9 13 L12 19 L14 18 L11 12 L17 12 Z"/></svg>') 2 2, auto;
         }
 
-        .bg-animation {
+        .background-layers {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: 0;
             overflow: hidden;
-            transform: translateZ(0);
+        }
+
+        .bg-gradient, .bg-noise, .bg-grid {
+            position: absolute;
+            inset: 0;
+        }
+
+        .bg-gradient {
+            background: radial-gradient(circle at 20% 25%, rgba(92, 124, 250, 0.25), transparent 60%),
+                        radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.18), transparent 55%),
+                        radial-gradient(circle at 50% 80%, rgba(157, 107, 255, 0.24), transparent 60%);
+            opacity: 0.75;
+        }
+
+        .bg-noise {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.15" numOctaves="2" stitchTiles="stitch"/></filter><rect width="180" height="180" filter="url(%23n)" opacity="0.18"/></svg>');
+            mix-blend-mode: soft-light;
+            opacity: 0.4;
+        }
+
+        .bg-grid {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.25;
         }
 
         .orb {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-            animation: float 20s ease-in-out infinite;
-            will-change: transform;
-            transform: translate3d(0, 0, 0);
-            backface-visibility: hidden;
+            filter: blur(110px);
+            opacity: 0.45;
+            animation: float 30s ease-in-out infinite;
+            pointer-events: none;
         }
 
         .orb-1 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.5), transparent);
-            top: -200px;
+            width: 620px;
+            height: 620px;
+            top: -240px;
             left: -200px;
-            animation-delay: 0s;
+            background: rgba(92, 124, 250, 0.55);
         }
 
         .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent);
-            top: 50%;
-            right: -150px;
-            animation-delay: 5s;
+            width: 520px;
+            height: 520px;
+            top: 60%;
+            right: -220px;
+            background: rgba(157, 107, 255, 0.5);
+            animation-delay: 4s;
         }
 
         .orb-3 {
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent);
-            bottom: -250px;
-            left: 30%;
-            animation-delay: 10s;
+            width: 720px;
+            height: 720px;
+            bottom: -320px;
+            left: 32%;
+            background: rgba(244, 114, 182, 0.45);
+            animation-delay: 9s;
         }
 
         @keyframes float {
-            0%, 100% {
-                transform: translate(0, 0) scale(1);
-            }
-            25% {
-                transform: translate(50px, -50px) scale(1.1);
-            }
-            50% {
-                transform: translate(-30px, 30px) scale(0.9);
-            }
-            75% {
-                transform: translate(40px, 20px) scale(1.05);
-            }
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            25% { transform: translate3d(40px, -30px, 0) scale(1.06); }
+            55% { transform: translate3d(-50px, 20px, 0) scale(0.94); }
+            80% { transform: translate3d(30px, 30px, 0) scale(1.03); }
         }
 
-        .gradient-text {
-            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 8s linear infinite;
-            font-weight: 600;
-            backface-visibility: hidden;
-            transform: translateZ(0);
-        }
-
-        @keyframes gradientShift {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        .container {
+        .layout {
             position: relative;
-            z-index: 1;
+            z-index: 2;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.05fr);
+            gap: clamp(32px, 5vw, 64px);
+            padding: clamp(28px, 6vw, 72px);
+            align-items: stretch;
+        }
+
+        .hero-panel {
             display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            width: 100%;
-            height: 100vh;
-            padding: 10px;
+            flex-direction: column;
+            gap: 28px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: var(--radius-lg);
+            padding: clamp(28px, 4vw, 42px);
+            backdrop-filter: blur(34px) saturate(140%);
+            -webkit-backdrop-filter: blur(34px) saturate(140%);
+            box-shadow: var(--shadow-lg);
+            position: relative;
             overflow: hidden;
         }
 
-        .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(40px) saturate(200%);
-            -webkit-backdrop-filter: blur(40px) saturate(200%);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 50px;
+        .hero-panel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(92, 124, 250, 0.25), transparent 60%);
+            opacity: 0.8;
+        }
+
+        .hero-panel > * { position: relative; z-index: 1; }
+
+        .logo-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(92, 124, 250, 0.25), rgba(157, 107, 255, 0.25));
+            border: 1px solid rgba(92, 124, 250, 0.35);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .hero-title {
+            font-size: clamp(2.1rem, 4vw, 3.2rem);
+            margin: 0;
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-title span {
+            background: linear-gradient(120deg, #89f7fe, #66a6ff 40%, #a78bfa);
+            -webkit-background-clip: text;
+                    background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 420px;
+        }
+
+        .hero-insights {
+            display: grid;
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .insight-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .insight-card {
+            flex: 1 1 160px;
+            min-width: 150px;
+            background: rgba(8, 12, 26, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 22px;
+            padding: 18px 20px;
+            display: grid;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .insight-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(92, 124, 250, 0.26), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.45s var(--transition-snappy);
+        }
+
+        .insight-card:hover::after { opacity: 1; }
+
+        .insight-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .insight-value {
+            font-size: 1.45rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .insight-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            background: rgba(52, 211, 153, 0.12);
+            color: #34d399;
+            width: fit-content;
+        }
+
+        .hero-timeline {
+            display: grid;
+            gap: 16px;
+            margin-top: 22px;
+        }
+
+        .timeline-title {
+            font-size: 0.85rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .hero-step {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .step-marker {
+            width: 38px;
+            height: 38px;
+            border-radius: 14px;
+            background: rgba(92, 124, 250, 0.2);
+            border: 1px solid rgba(92, 124, 250, 0.35);
+            display: grid;
+            place-items: center;
+            font-weight: 600;
+        }
+
+        .step-body h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .step-body p {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+        }
+
+        .hero-footer {
+            margin-top: auto;
+            padding-top: 18px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .support-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .support-card p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+        }
+
+        .main-shell {
+            display: flex;
+            position: relative;
+        }
+
+        .shell-card {
+            background: rgba(10, 14, 28, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: var(--radius-lg);
             width: 100%;
-            height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-            transform: translateZ(0);
-            backface-visibility: hidden;
+            max-height: calc(100vh - clamp(64px, 9vw, 140px));
+            min-height: min(900px, 100vh - clamp(64px, 9vw, 140px));
             display: flex;
             flex-direction: column;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 50px;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #ffffff, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .logout-btn {
-            padding: 12px 24px;
-            background: rgba(239, 68, 68, 0.05);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 12px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.15s ease;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .logout-btn:hover {
-            border-color: rgba(239, 68, 68, 0.4);
-            background: rgba(239, 68, 68, 0.1);
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
-        }
-
-        .content {
-            display: grid;
-            gap: 40px;
-            width: 100%;
-            height: 100%;
+        .shell-scroll {
+            padding: clamp(28px, 4vw, 48px);
             overflow-y: auto;
-            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(92, 124, 250, 0.35) transparent;
         }
 
-        .title {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-            letter-spacing: -0.01em;
-            background: linear-gradient(135deg, #ffffff, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .shell-scroll::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .subtitle {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            margin-bottom: 30px;
-            font-weight: 400;
+        .shell-scroll::-webkit-scrollbar-thumb {
+            background: rgba(92, 124, 250, 0.45);
+            border-radius: 8px;
         }
 
-        .account-info {
+        .surface-stack {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: clamp(26px, 4vw, 40px);
         }
 
-        .info-item {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.03));
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .info-item:hover {
-            border-color: rgba(59, 130, 246, 0.2);
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.05));
-        }
-
-        .info-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .info-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-
-        .tabs {
-            display: flex;
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
             gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: none;
-            overflow-x: auto;
-            padding-bottom: 0;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            width: fit-content;
         }
 
-        .tab-btn {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-bottom: none;
+        .section-heading {
+            display: grid;
+            gap: 10px;
+        }
+
+        .section-heading h2,
+        .section-heading h3 {
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .section-subtitle {
+            margin: 0;
             color: var(--text-secondary);
+            font-size: 0.98rem;
+        }
+
+        .auth-toggle {
+            display: inline-flex;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            gap: 6px;
+        }
+
+        .auth-toggle button {
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 10px 24px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: all 0.15s ease;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            border-radius: 10px;
-            font-weight: 500;
+            transition: all 0.35s var(--transition-snappy);
         }
 
-        .tab-btn.active {
+        .auth-toggle button.active {
+            background: linear-gradient(135deg, rgba(92, 124, 250, 0.35), rgba(157, 107, 255, 0.35));
             color: var(--text-primary);
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(59, 130, 246, 0.08);
+            box-shadow: 0 14px 32px rgba(92, 124, 250, 0.45);
         }
 
-        .tab-btn:hover {
+        .toast-stack {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .toast {
+            position: relative;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 16px;
+            align-items: center;
+            padding: 16px 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(10, 12, 28, 0.72);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            animation: fadeInUp 0.35s ease forwards;
+        }
+
+        .toast.success { border-color: rgba(52, 211, 153, 0.4); }
+        .toast.error { border-color: rgba(248, 113, 113, 0.4); }
+        .toast.info { border-color: rgba(92, 124, 250, 0.4); }
+
+        .toast-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .toast.success .toast-indicator { color: #34d399; }
+        .toast.error .toast-indicator { color: #f87171; }
+    .toast.info .toast-indicator { color: #5c7cfa; }
+
+        .toast-body {
+            display: grid;
+            gap: 4px;
+        }
+
+        .toast-body strong {
+            font-size: 0.92rem;
+        }
+
+        .toast-body span {
+            font-size: 0.86rem;
+            color: var(--text-secondary);
+        }
+
+        .toast-close {
+            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .toast-close:hover {
+            background: rgba(255, 255, 255, 0.12);
             color: var(--text-primary);
-            border-color: rgba(59, 130, 246, 0.2);
-            background: rgba(59, 130, 246, 0.05);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .tab-content {
             display: none;
-            animation: fadeIn 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: clamp(24px, 3vw, 32px);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
         }
 
         .tab-content.active {
-            display: block;
+            display: grid;
+            gap: clamp(20px, 3vw, 28px);
+            animation: fadeIn 0.45s ease;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-grid {
+            display: grid;
+            gap: clamp(16px, 2vw, 22px);
         }
 
         .form-group {
-            margin-bottom: 16px;
+            display: grid;
+            gap: 10px;
         }
 
-        .form-label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            font-weight: 500;
+        label {
+            font-size: 0.82rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
         }
 
-        .form-input {
+        .form-input, textarea.form-input {
             width: 100%;
-            padding: 11px 14px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
+            padding: 16px 18px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(10, 14, 28, 0.65);
             color: var(--text-primary);
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.95rem;
-            transition: all 0.15s ease;
+            font-size: 1rem;
+            transition: all 0.35s var(--transition-snappy);
+            outline: none;
         }
 
-        .form-input:focus {
-            outline: none;
-            border-color: rgba(59, 130, 246, 0.4);
-            background: rgba(59, 130, 246, 0.04);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+        textarea.form-input {
+            min-height: 90px;
+            resize: vertical;
         }
 
         .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .form-input:focus {
+            border-color: rgba(92, 124, 250, 0.7);
+            box-shadow: 0 18px 40px rgba(92, 124, 250, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .checkbox-line {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.92rem;
             color: var(--text-secondary);
         }
 
-        .btn {
-            padding: 11px 22px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.7), rgba(139, 92, 246, 0.7));
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 10px;
-            color: var(--text-primary);
+        .checkbox-line input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            accent-color: var(--accent-primary);
             cursor: pointer;
-            transition: all 0.15s ease;
-            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 14px 24px;
+            font-size: 0.98rem;
             font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .btn:hover {
-            border-color: rgba(59, 130, 246, 0.4);
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(139, 92, 246, 0.85));
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
-        }
-
-        .btn-group {
-            display: flex;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            transition: all 0.35s var(--transition-snappy);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             gap: 10px;
-            flex-wrap: wrap;
+            position: relative;
+            overflow: hidden;
         }
 
-        .message {
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            animation: slideIn 0.3s ease;
-            border: 1px solid;
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            background: linear-gradient(120deg, rgba(255, 255, 255, 0.4), transparent 55%);
+            transition: opacity 0.45s ease;
+        }
+
+        .btn:hover::after { opacity: 0.25; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5c7cfa, #9d6bff);
+            color: var(--text-primary);
+            box-shadow: 0 20px 44px rgba(92, 124, 250, 0.45);
+            border: 1px solid rgba(148, 163, 255, 0.45);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 26px 64px rgba(92, 124, 250, 0.55);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: var(--text-primary);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.22), rgba(217, 119, 6, 0.18));
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: #facc15;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.24), rgba(220, 38, 38, 0.2));
+            border: 1px solid rgba(248, 113, 113, 0.4);
+            color: #fca5a5;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .auth-footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .auth-footer a {
+            color: #c3d0ff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .account-section {
+            display: grid;
+            gap: clamp(24px, 3.5vw, 36px);
+        }
+
+        .dashboard-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .dashboard-title h2 {
+            margin: 0;
+            font-size: clamp(1.8rem, 3vw, 2.3rem);
+        }
+
+        .dashboard-title p {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
+        }
+
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.18), rgba(16, 185, 129, 0.12));
+            border: 1px solid rgba(52, 211, 153, 0.4);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 22px rgba(52, 211, 153, 0.65);
+            position: relative;
+        }
+
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            opacity: 0.6;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: clamp(16px, 3vw, 24px);
+        }
+
+        .overview-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            padding: 22px;
+            display: grid;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .overview-card::after {
+            content: '';
+            position: absolute;
+            inset: -35% 45% auto -35%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(92, 124, 250, 0.28), transparent 65%);
+            opacity: 0;
+            transition: opacity 0.45s ease;
+        }
+
+        .overview-card:hover::after { opacity: 1; }
+
+        .overview-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .overview-value {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            word-break: break-word;
+        }
+
+        .overview-foot {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .stat-section {
+            display: grid;
+            gap: 18px;
+        }
+
+        .stat-tiles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(92, 124, 250, 0.25);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: grid;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.35s var(--transition-snappy), box-shadow 0.35s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .stat-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #5c7cfa);
+            -webkit-background-clip: text;
+                    background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+
+        .feature-card {
+            display: grid;
+            gap: 12px;
+            padding: 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            transition: transform 0.35s var(--transition-snappy), box-shadow 0.35s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            font-size: 1.4rem;
+            background: rgba(92, 124, 250, 0.2);
+            border: 1px solid rgba(92, 124, 250, 0.35);
+        }
+
+        .feature-body h4 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .feature-body p {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+        }
+
+        .activity-wrap {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: clamp(16px, 3vw, 24px);
+        }
+
+        .activity-feed,
+        .progress-timeline {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            padding: 22px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .activity-item:last-child { border-bottom: none; }
+
+        .activity-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(92, 124, 250, 0.7);
+            margin-top: 6px;
+            box-shadow: 0 0 12px rgba(92, 124, 250, 0.6);
+        }
+
+        .activity-body h4 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .activity-body p {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
             font-size: 0.9rem;
         }
 
-        .message.success {
-            background: rgba(16, 185, 129, 0.08);
-            border-color: rgba(16, 185, 129, 0.2);
-            color: #10b981;
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
 
-        .message.error {
-            background: rgba(239, 68, 68, 0.08);
-            border-color: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+        .timeline {
+            display: grid;
+            gap: 18px;
         }
 
-        .message.info {
-            background: rgba(59, 130, 246, 0.08);
-            border-color: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
+        .timeline-item {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .timeline-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 8px;
+            background: rgba(157, 107, 255, 0.2);
+            border: 1px solid rgba(157, 107, 255, 0.4);
+            display: grid;
+            place-items: center;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .timeline-body h4 {
+            margin: 0;
+            font-size: 1.02rem;
+        }
+
+        .timeline-body p {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .manager-shell {
+            display: grid;
+            gap: 22px;
+        }
+
+        .manager-tabs {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            padding: 6px;
+        }
+
+        .tab-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 10px 20px;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-snappy);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(92, 124, 250, 0.35), rgba(157, 107, 255, 0.35));
+            color: var(--text-primary);
+            box-shadow: 0 14px 34px rgba(92, 124, 250, 0.45);
+        }
+
+        .manager-grid {
+            display: grid;
+            gap: 22px;
+        }
+
+        .manager-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            padding: clamp(20px, 3vw, 26px);
+            display: grid;
+            gap: 18px;
+        }
+
+        .manager-columns {
+            display: grid;
+            gap: 18px;
+        }
+
+        .manager-columns.two {
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+
+        #searchResults {
+            max-height: 280px;
+            overflow-y: auto;
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            scrollbar-width: thin;
+        }
+
+        #searchResults::-webkit-scrollbar { width: 6px; }
+        #searchResults::-webkit-scrollbar-thumb {
+            background: rgba(92, 124, 250, 0.35);
+            border-radius: 6px;
+        }
+
+        .search-result-entry {
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid rgba(92, 124, 250, 0.55);
+            background: rgba(92, 124, 250, 0.08);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .search-result-entry:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .owner-note {
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            color: #facc15;
+            font-size: 0.9rem;
         }
 
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            margin-top: 30px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
+            padding: 12px 20px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text-primary);
             text-decoration: none;
-            font-size: 0.9rem;
-            transition: all 0.15s ease;
+            font-size: 0.92rem;
+            width: fit-content;
             cursor: pointer;
-            font-weight: 500;
+            transition: all 0.35s var(--transition-snappy);
         }
 
         .back-link:hover {
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(59, 130, 246, 0.08);
-            color: var(--text-primary);
+            transform: translateX(-4px);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: var(--shadow-soft);
         }
 
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+        .hidden { display: none !important; }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+        @media (max-width: 1080px) {
+            .layout {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
 
-        .stat-card {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.03));
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
+            .main-shell {
+                order: -1;
+            }
 
-        .stat-card:hover {
-            border-color: rgba(59, 130, 246, 0.2);
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.05));
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .stat-value {
-            font-size: 1.6rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #ffffff, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            .shell-card {
+                max-height: none;
+                min-height: auto;
+            }
         }
 
         @media (max-width: 768px) {
-            .card {
-                padding: 30px 20px;
-                border-radius: 15px;
+            .layout {
+                padding: 24px;
             }
 
-            .logo {
-                font-size: 1.8rem;
+            .shell-scroll {
+                padding: 26px;
             }
 
-            .title {
-                font-size: 1.4rem;
+            .hero-panel {
+                padding: 24px;
             }
 
-            .account-info {
+            .activity-wrap {
                 grid-template-columns: 1fr;
             }
 
-            .header {
+            .overview-grid,
+            .feature-grid,
+            .stat-tiles {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
                 flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
             }
-
-            .tabs {
-                flex-wrap: wrap;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .hidden {
-            display: none !important;
         }
     </style>
 </head>
 <body>
-    <div class="bg-animation">
+    <div class="background-layers">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-noise"></div>
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
         <div class="orb orb-3"></div>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <!-- Login/Register Section -->
-            <div id="authSection" class="content">
-                <div id="messageContainer"></div>
+    <div class="layout">
+        <aside class="hero-panel">
+            <div class="hero-header">
+                <span class="logo-pill">myTAD CONTROL</span>
+                <h1 class="hero-title">Command your account with <span>confidence</span>.</h1>
+                <p class="hero-description">A polished, real-time cockpit for your myTAD identity. Switch accounts, adjust security, and manage users without leaving this page.</p>
+            </div>
 
-                <!-- Login Tab -->
-                <div id="loginTab" class="tab-content active">
-                    <div class="header">
-                        <h1 class="logo gradient-text">myTAD</h1>
+            <div class="hero-insights">
+                <div class="insight-row">
+                    <div class="insight-card">
+                        <span class="insight-label">Uptime</span>
+                        <span class="insight-value">99.99%</span>
+                        <span class="insight-trend">▲ 0.6% this month</span>
                     </div>
-                    <div class="title">Welcome Back</div>
-                    <p class="subtitle">Login to your account</p>
-
-                    <form class="login-form">
-                        <div class="form-group">
-                            <label class="form-label">Username</label>
-                            <input type="text" id="loginUsername" class="form-input" placeholder="Enter your username">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Password</label>
-                            <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password">
-                        </div>
-                        <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="rememberMe" style="cursor: pointer;">
-                                <span style="font-size: 0.95rem;">Remember me for 30 days</span>
-                            </label>
-                        </div>
-                        <button type="button" class="btn" onclick="handleLogin()" style="width: 100%;">Login</button>
-                    </form>
-
-                    <div style="margin-top: 20px; text-align: center; color: var(--text-secondary);">
-                        Don't have an account? <a href="#" onclick="switchAuthTab('register')" style="color: var(--gradient-end); cursor: pointer;">Sign up</a>
+                    <div class="insight-card">
+                        <span class="insight-label">Active sessions</span>
+                        <span class="insight-value">4</span>
+                        <span class="insight-trend">All secure</span>
                     </div>
                 </div>
+                <div class="insight-card">
+                    <span class="insight-label">Instant actions</span>
+                    <span class="insight-value">12 tools</span>
+                    <span class="insight-trend">Everything in one view</span>
+                </div>
+            </div>
 
-                <!-- Register Tab -->
-                <div id="registerTab" class="tab-content">
-                    <div class="header">
-                        <h1 class="logo gradient-text">myTAD</h1>
+            <div class="hero-timeline">
+                <span class="timeline-title">Workflows that flow</span>
+                <div class="hero-step">
+                    <div class="step-marker">1</div>
+                    <div class="step-body">
+                        <h3>Sign in securely</h3>
+                        <p>Dual-token protection rides through Cloudflare with zero friction.</p>
                     </div>
-                    <div class="title">Create Account</div>
-                    <p class="subtitle">Join the community</p>
-
-                    <form class="login-form">
-                        <div class="form-group">
-                            <label class="form-label">Username</label>
-                            <input type="text" id="registerUsername" class="form-input" placeholder="Choose your username">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="registerEmail" class="form-input" placeholder="Enter your email">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Password</label>
-                            <input type="password" id="registerPassword" class="form-input" placeholder="Create a password (6+ chars)">
-                        </div>
-                        <button type="button" class="btn" onclick="handleRegister()" style="width: 100%;">Create Account</button>
-                    </form>
-
-                    <div style="margin-top: 20px; text-align: center; color: var(--text-secondary);">
-                        Already have an account? <a href="#" onclick="switchAuthTab('login')" style="color: var(--gradient-end); cursor: pointer;">Login</a>
+                </div>
+                <div class="hero-step">
+                    <div class="step-marker">2</div>
+                    <div class="step-body">
+                        <h3>Review smart metrics</h3>
+                        <p>Glass dashboard keeps key stats and actions in focus.</p>
+                    </div>
+                </div>
+                <div class="hero-step">
+                    <div class="step-marker">3</div>
+                    <div class="step-body">
+                        <h3>Orchestrate users</h3>
+                        <p>Promote admins, warn users, and resolve incidents in seconds.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Account Management Section (hidden initially) -->
-            <div id="accountSection" class="content hidden">
-                <div class="header">
-                    <div>
-                        <h1 class="logo gradient-text">myTAD</h1>
-                        <p class="subtitle" style="margin: 0;">Welcome, <span id="displayUsername"></span></p>
-                    </div>
-                    <button class="logout-btn" onclick="handleLogout()">🔓 Logout</button>
-                </div>
-
-                <div id="messageContainer2"></div>
-
-                <!-- Account Overview -->
-                <div id="accountOverview">
-                    <div class="title">Account Overview</div>
-                    <div class="account-info">
-                        <div class="info-item">
-                            <div class="info-label">Username</div>
-                            <div class="info-value" id="displayUsername2"></div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Email</div>
-                            <div class="info-value" id="displayEmail"></div>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid" id="statsContainer"></div>
-
-                    <button class="btn" onclick="showManagement()">⚙ Manage Account</button>
-                </div>
-
-                <!-- Account Management -->
-                <div id="accountManagement" class="hidden">
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="switchMgmtTab('profile')">👤 Profile</button>
-                        <button class="tab-btn" onclick="switchMgmtTab('security')">🔐 Security</button>
-                        <button class="tab-btn" onclick="switchMgmtTab('preferences')">⚙ Preferences</button>
-                        <button class="tab-btn" id="adminTabBtn" style="display: none;" onclick="switchMgmtTab('admin')">👑 Admin</button>
-                    </div>
-
-                    <!-- Profile Tab -->
-                    <div id="profileTab" class="tab-content active">
-                        <div class="title">Profile Settings</div>
-                        <div class="form-group">
-                            <label class="form-label">Username</label>
-                            <input type="text" id="mgmtUsername" class="form-input" placeholder="New username">
-                            <button class="btn" style="margin-top: 10px; width: 100%;" onclick="handleUpdateUsername()">Update Username</button>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="mgmtEmail" class="form-input" placeholder="New email">
-                            <button class="btn" style="margin-top: 10px; width: 100%;" onclick="handleUpdateEmail()">Update Email</button>
-                        </div>
-                    </div>
-
-                    <!-- Security Tab -->
-                    <div id="securityTab" class="tab-content">
-                        <div class="title">Security Settings</div>
-                        <div class="form-group">
-                            <label class="form-label">Current Password</label>
-                            <input type="password" id="currentPassword" class="form-input" placeholder="Enter current password">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">New Password</label>
-                            <input type="password" id="newPassword" class="form-input" placeholder="New password (6+ chars)">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Confirm New Password</label>
-                            <input type="password" id="confirmNewPassword" class="form-input" placeholder="Confirm new password">
-                            <button class="btn" style="margin-top: 10px; width: 100%;" onclick="handleChangePassword()">Change Password</button>
-                        </div>
-                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
-                            <div class="title" style="margin-bottom: 15px;">Delete Account</div>
-                            <p class="subtitle">This action cannot be undone.</p>
-                            <button class="btn" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); width: 100%; margin-top: 10px;" onclick="handleDeleteAccount()">🗑 Delete Account</button>
-                        </div>
-                    </div>
-
-                    <!-- Preferences Tab -->
-                    <div id="preferencesTab" class="tab-content">
-                        <div class="title">User Preferences</div>
-                        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
-                            <label class="form-label" style="margin: 0;">Email Notifications</label>
-                            <input type="checkbox" id="emailNotifications" onchange="savePreference('emailNotifications')" style="width: 20px; height: 20px; cursor: pointer;">
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
-                            <label class="form-label" style="margin: 0;">Privacy Mode</label>
-                            <input type="checkbox" id="privacyMode" onchange="savePreference('privacyMode')" style="width: 20px; height: 20px; cursor: pointer;">
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
-                            <label class="form-label" style="margin: 0;">Dark Theme</label>
-                            <input type="checkbox" id="darkTheme" onchange="savePreference('darkTheme')" style="width: 20px; height: 20px; cursor: pointer;" checked>
-                        </div>
-                    </div>
-
-                    <!-- Admin Tab (Owner Only) -->
-                    <div id="adminTab" class="tab-content">
-                        <div class="title">👑 Admin Management</div>
-
-                        <!-- User Search - Modern Design -->
-                        <div style="margin-bottom: 30px;">
-                            <div style="color: #ffb84d; margin-bottom: 15px; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.5px;">🔍 Search User</div>
-                            <input type="text" id="userSearchInput" class="form-input" placeholder="Search by username or email..." oninput="searchUsers()" style="margin-bottom: 12px;">
-                            <div id="searchResults" style="max-height: 280px; overflow-y: auto; display: none; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 12px;">
-                                <p style="color: #a0a0a0; font-size: 0.9rem;">Type to search...</p>
-                            </div>
-                        </div>
-
-                        <!-- User Management Section -->
-                        <div style="margin-bottom: 30px;">
-                            <div style="color: #ffb84d; margin-bottom: 15px; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.5px;">⚙️ Manage User</div>
-                            
-                            <input type="text" id="adminTargetUser" class="form-input" placeholder="User ID or username" style="margin-bottom: 15px;">
-
-                            <!-- Reset Password -->
-                            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                                <input type="password" id="adminNewPassword" class="form-input" placeholder="New password (6+ chars)" style="flex: 1;">
-                                <button class="btn" onclick="handleAdminResetPassword()" style="flex-shrink: 0; background: rgba(59, 130, 246, 0.3);">🔐 Reset</button>
-                            </div>
-
-                            <!-- Update Email -->
-                            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                                <input type="email" id="adminNewEmail" class="form-input" placeholder="New email" style="flex: 1;">
-                                <button class="btn" onclick="handleAdminUpdateEmail()" style="flex-shrink: 0; background: rgba(34, 197, 94, 0.3);">📧 Update</button>
-                            </div>
-
-                            <!-- Account Status Buttons -->
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <button class="btn" style="background: rgba(239, 68, 68, 0.3); flex: 1;" onclick="handleAdminUserAction('ban')">🚫 Ban</button>
-                                <button class="btn" style="background: rgba(34, 197, 94, 0.3); flex: 1;" onclick="handleAdminUserAction('unban')">✓ Unban</button>
-                            </div>
-
-                            <!-- Warning Message -->
-                            <textarea id="adminWarningMessage" class="form-input" placeholder="Warning message (5-500 chars)" style="min-height: 50px; resize: vertical; margin-bottom: 10px;"></textarea>
-                            <button class="btn" style="width: 100%; background: rgba(251, 146, 60, 0.3);" onclick="handleAdminSendWarning()">⚠️ Issue Warning</button>
-                        </div>
-
-                        <!-- Owner Only Section -->
-                        <div id="ownerOnlySection" style="display: none; margin-bottom: 30px;">
-                            <div style="color: #ffd700; margin-bottom: 15px; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.5px;">👑 Owner Controls</div>
-                            
-                            <!-- Promote Admin -->
-                            <div style="margin-bottom: 15px;">
-                                <input type="text" id="promoteTargetUser" class="form-input" placeholder="User ID or username" style="margin-bottom: 8px;">
-                                <button class="btn" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 255, 0, 0.2)); color: #ffd700; width: 100%; font-weight: 600; border: 1px solid rgba(255, 215, 0, 0.3);" onclick="handleAddAdmin()">✨ Promote to Admin</button>
-                            </div>
-
-                            <!-- Revoke Admin -->
-                            <div style="margin-bottom: 15px;">
-                                <input type="text" id="revokeTargetUser" class="form-input" placeholder="User ID or username" style="margin-bottom: 8px;">
-                                <button class="btn" style="background: rgba(239, 68, 68, 0.3); width: 100%; font-weight: 600;" onclick="handleRevokeAdmin()">❌ Revoke Admin</button>
-                            </div>
-
-                            <!-- Warning Box -->
-                            <div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 193, 7, 0.05)); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 10px; padding: 12px; backdrop-filter: blur(5px);">
-                                <p style="color: #ffb84d; font-size: 0.9rem; margin: 0;"><strong>⚠️ Owner Only:</strong> These controls are restricted to the account owner.</p>
-                            </div>
-                        </div>
-
-                        <!-- Back Button -->
-                        <button class="back-link" onclick="hideManagement()" style="display: block; width: 100%; text-align: left; margin-top: 30px; padding: 10px 0; color: #8b7355; font-weight: 500; transition: color 0.3s;">← Back to Account</button>
-                    </div>
-
-                    <!-- Spacer -->
+            <div class="hero-footer">
+                <div class="support-card">
+                    <p>Need a hand? Our team is here for high-priority operators.</p>
+                    <a class="btn btn-ghost" href="mailto:support@thatoneamiho.cc">Contact Support</a>
                 </div>
             </div>
-        </div>
+        </aside>
+
+        <main class="main-shell">
+            <div class="shell-card">
+                <div class="shell-scroll">
+                    <section id="authSection" class="surface-stack">
+                        <div class="section-heading">
+                            <span class="eyebrow">Secure Access</span>
+                            <h2>Access your command center</h2>
+                            <p class="section-subtitle">Sign in to view your dashboard or spin up a fresh account with a single click.</p>
+                        </div>
+
+                        <div class="auth-toggle">
+                            <button class="active" data-tab="login" onclick="switchAuthTab('login')">Login</button>
+                            <button data-tab="register" onclick="switchAuthTab('register')">Register</button>
+                        </div>
+
+                        <div id="messageContainer" class="toast-stack"></div>
+
+                        <div id="loginTab" class="tab-content active">
+                            <form class="form-grid">
+                                <div class="form-group">
+                                    <label for="loginUsername">Username</label>
+                                    <input type="text" id="loginUsername" class="form-input" placeholder="Enter your username">
+                                </div>
+                                <div class="form-group">
+                                    <label for="loginPassword">Password</label>
+                                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password">
+                                </div>
+                                <label class="checkbox-line">
+                                    <input type="checkbox" id="rememberMe">
+                                    Remember me for 30 days
+                                </label>
+                                <button type="button" class="btn btn-primary" onclick="handleLogin()">Sign in securely</button>
+                            </form>
+
+                            <div class="auth-footer">
+                                Don't have an account yet?
+                                <a href="#" onclick="switchAuthTab('register')">Create one</a>
+                            </div>
+                        </div>
+
+                        <div id="registerTab" class="tab-content">
+                            <form class="form-grid">
+                                <div class="form-group">
+                                    <label for="registerUsername">Username</label>
+                                    <input type="text" id="registerUsername" class="form-input" placeholder="Choose your username">
+                                </div>
+                                <div class="form-group">
+                                    <label for="registerEmail">Email</label>
+                                    <input type="email" id="registerEmail" class="form-input" placeholder="Enter your email">
+                                </div>
+                                <div class="form-group">
+                                    <label for="registerPassword">Password</label>
+                                    <input type="password" id="registerPassword" class="form-input" placeholder="Create a password (6+ chars)">
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="handleRegister()">Create my account</button>
+                            </form>
+
+                            <div class="auth-footer">
+                                Already joined?
+                                <a href="#" onclick="switchAuthTab('login')">Return to login</a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="accountSection" class="surface-stack account-section hidden">
+                        <header class="dashboard-header">
+                            <div class="dashboard-title">
+                                <span class="eyebrow">Dashboard</span>
+                                <h2>Welcome back, <span id="displayUsername"></span></h2>
+                                <p>Your centralized console for everything myTAD.</p>
+                            </div>
+                            <button class="btn btn-ghost" onclick="handleLogout()">Log out</button>
+                        </header>
+
+                        <div id="messageContainer2" class="toast-stack"></div>
+
+                        <div class="status-banner">
+                            <span class="status-dot"></span>
+                            <div>All systems operational • Last sync <span id="lastSync">Just now</span></div>
+                        </div>
+
+                        <div class="overview-grid">
+                            <article class="overview-card">
+                                <span class="overview-label">Username</span>
+                                <span class="overview-value" id="displayUsername2"></span>
+                                <span class="overview-foot">Primary identity on record</span>
+                            </article>
+                            <article class="overview-card">
+                                <span class="overview-label">Email</span>
+                                <span class="overview-value" id="displayEmail"></span>
+                                <span class="overview-foot">Where important alerts land</span>
+                            </article>
+                            <article class="overview-card">
+                                <span class="overview-label">Session health</span>
+                                <span class="overview-value">Protected</span>
+                                <span class="overview-foot">All active sessions verified & secure</span>
+                            </article>
+                        </div>
+
+                        <div class="stat-section">
+                            <div class="section-heading">
+                                <h3>Performance snapshot</h3>
+                                <p class="section-subtitle">Key milestones update automatically as you explore.</p>
+                            </div>
+                            <div id="statsContainer" class="stat-tiles"></div>
+                        </div>
+
+                        <div class="quick-actions">
+                            <button class="btn btn-primary" onclick="showManagement()">Open settings hub</button>
+                            <button class="btn btn-warning" onclick="switchAuthTab('login'); handleLogout();">Reset password</button>
+                            <button class="btn btn-danger" onclick="handleLogout()">Sign out</button>
+                        </div>
+
+                        <div class="feature-grid">
+                            <article class="feature-card">
+                                <div class="feature-icon">🛡️</div>
+                                <div class="feature-body">
+                                    <h4>Account security</h4>
+                                    <p>End-to-end protection with token validation and admin guardrails.</p>
+                                </div>
+                            </article>
+                            <article class="feature-card">
+                                <div class="feature-icon">⚡</div>
+                                <div class="feature-body">
+                                    <h4>Instant actions</h4>
+                                    <p>Update credentials, toggle preferences, and manage sessions instantly.</p>
+                                </div>
+                            </article>
+                            <article class="feature-card">
+                                <div class="feature-icon">🌐</div>
+                                <div class="feature-body">
+                                    <h4>Global access</h4>
+                                    <p>Optimized for Cloudflare with resilient X-Auth token fallback.</p>
+                                </div>
+                            </article>
+                            <article class="feature-card">
+                                <div class="feature-icon">👥</div>
+                                <div class="feature-body">
+                                    <h4>Admin orchestration</h4>
+                                    <p>Promote, revoke, and guide users with rich contextual feedback.</p>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div class="activity-wrap">
+                            <div class="activity-feed">
+                                <div class="section-heading">
+                                    <h3>Activity feed</h3>
+                                    <p class="section-subtitle">A curated view of the latest platform moves.</p>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-dot"></div>
+                                    <div class="activity-body">
+                                        <h4>Real-time stats shipped</h4>
+                                        <p>The dashboard now refreshes account stats after every login.</p>
+                                        <span class="activity-time">2 minutes ago</span>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-dot"></div>
+                                    <div class="activity-body">
+                                        <h4>Admin ban guard added</h4>
+                                        <p>Admins can no longer be banned accidentally—full protection enabled.</p>
+                                        <span class="activity-time">15 minutes ago</span>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-dot"></div>
+                                    <div class="activity-body">
+                                        <h4>Cloudflare header fix</h4>
+                                        <p>Authorization header fallback (X-Auth-Token) rolled out to production.</p>
+                                        <span class="activity-time">1 hour ago</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="progress-timeline">
+                                <div class="section-heading">
+                                    <h3>Roadmap highlights</h3>
+                                    <p class="section-subtitle">See what just landed and what's coming next.</p>
+                                </div>
+                                <div class="timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot">01</div>
+                                        <div class="timeline-body">
+                                            <h4>Unified glass interface</h4>
+                                            <p>Polished UI with rounded buttons and animated surfaces everywhere.</p>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot">02</div>
+                                        <div class="timeline-body">
+                                            <h4>Micro-interaction suite</h4>
+                                            <p>Hover, ripple, and shine effects deliver tactile feedback.</p>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot">03</div>
+                                        <div class="timeline-body">
+                                            <h4>Next: Activity analytics</h4>
+                                            <p>Deeper insights with anomaly detection are on the immediate roadmap.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="accountManagement" class="manager-shell hidden">
+                            <div class="section-heading">
+                                <span class="eyebrow">Control Center</span>
+                                <h3>Fine-tune your account</h3>
+                                <p class="section-subtitle">Update profile details, rotate passwords, tune preferences, or manage users if you're an admin.</p>
+                            </div>
+
+                            <div class="manager-tabs">
+                                <button class="tab-btn active" onclick="switchMgmtTab('profile', event)">Profile</button>
+                                <button class="tab-btn" onclick="switchMgmtTab('security', event)">Security</button>
+                                <button class="tab-btn" onclick="switchMgmtTab('preferences', event)">Preferences</button>
+                                <button class="tab-btn" id="adminTabBtn" style="display:none;" onclick="switchMgmtTab('admin', event)">Admin</button>
+                            </div>
+
+                            <div id="profileTab" class="tab-content active manager-grid">
+                                <div class="manager-card">
+                                    <h4>Update username</h4>
+                                    <p class="section-subtitle">Give your profile a fresh handle instantly.</p>
+                                    <input type="text" id="mgmtUsername" class="form-input" placeholder="New username">
+                                    <button class="btn btn-primary" onclick="handleUpdateUsername()">Save username</button>
+                                </div>
+                                <div class="manager-card">
+                                    <h4>Update email</h4>
+                                    <p class="section-subtitle">Ensure recovery links arrive where you expect them.</p>
+                                    <input type="email" id="mgmtEmail" class="form-input" placeholder="New email">
+                                    <button class="btn btn-primary" onclick="handleUpdateEmail()">Save email</button>
+                                </div>
+                            </div>
+
+                            <div id="securityTab" class="tab-content manager-grid">
+                                <div class="manager-card">
+                                    <h4>Rotate password</h4>
+                                    <p class="section-subtitle">Keep attackers out with regular password updates.</p>
+                                    <div class="manager-columns">
+                                        <input type="password" id="currentPassword" class="form-input" placeholder="Current password">
+                                        <input type="password" id="newPassword" class="form-input" placeholder="New password (6+ chars)">
+                                        <input type="password" id="confirmNewPassword" class="form-input" placeholder="Confirm new password">
+                                        <button class="btn btn-primary" onclick="handleChangePassword()">Update password</button>
+                                    </div>
+                                </div>
+                                <div class="manager-card">
+                                    <h4>Danger zone</h4>
+                                    <p class="section-subtitle">Totally done? You can remove your account permanently.</p>
+                                    <button class="btn btn-danger" onclick="handleDeleteAccount()">Delete account</button>
+                                </div>
+                            </div>
+
+                            <div id="preferencesTab" class="tab-content manager-grid">
+                                <div class="manager-card">
+                                    <h4>Notification controls</h4>
+                                    <div class="manager-columns">
+                                        <label class="checkbox-line">
+                                            <input type="checkbox" id="emailNotifications" onchange="savePreference('emailNotifications')">
+                                            Email notifications
+                                        </label>
+                                        <label class="checkbox-line">
+                                            <input type="checkbox" id="privacyMode" onchange="savePreference('privacyMode')">
+                                            Privacy mode
+                                        </label>
+                                        <label class="checkbox-line">
+                                            <input type="checkbox" id="darkTheme" onchange="savePreference('darkTheme')" checked>
+                                            Dark theme
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="adminTab" class="tab-content manager-grid">
+                                <div class="manager-card">
+                                    <h4>Search users</h4>
+                                    <p class="section-subtitle">Look up accounts instantly by username or email.</p>
+                                    <input type="text" id="userSearchInput" class="form-input" placeholder="Search by username or email" oninput="searchUsers()">
+                                    <div id="searchResults">
+                                        <p style="color: var(--text-muted);">Type to search...</p>
+                                    </div>
+                                </div>
+
+                                <div class="manager-card">
+                                    <h4>Manage account</h4>
+                                    <p class="section-subtitle">Reset credentials, toggle bans, or send warnings.</p>
+                                    <div class="manager-columns two">
+                                        <input type="text" id="adminTargetUser" class="form-input" placeholder="User ID">
+                                        <div class="manager-columns">
+                                            <input type="password" id="adminNewPassword" class="form-input" placeholder="New password (6+ chars)">
+                                            <button class="btn btn-accent" onclick="handleAdminResetPassword()">Reset password</button>
+                                        </div>
+                                        <div class="manager-columns">
+                                            <input type="email" id="adminNewEmail" class="form-input" placeholder="New email">
+                                            <button class="btn btn-accent" onclick="handleAdminUpdateEmail()">Update email</button>
+                                        </div>
+                                        <div class="manager-columns two">
+                                            <button class="btn btn-danger" onclick="handleAdminUserAction('ban')">Ban user</button>
+                                            <button class="btn btn-primary" onclick="handleAdminUserAction('unban')">Unban user</button>
+                                        </div>
+                                        <textarea id="adminWarningMessage" class="form-input" placeholder="Warning message (5-500 chars)"></textarea>
+                                        <button class="btn btn-warning" onclick="handleAdminSendWarning()">Send warning</button>
+                                    </div>
+                                </div>
+
+                                <div id="ownerOnlySection" class="manager-card" style="display:none;">
+                                    <h4>Owner controls</h4>
+                                    <p class="section-subtitle">Promote or revoke admin privileges instantly.</p>
+                                    <div class="manager-columns two">
+                                        <div class="manager-columns">
+                                            <input type="text" id="promoteTargetUser" class="form-input" placeholder="User ID">
+                                            <button class="btn btn-primary" onclick="handleAddAdmin()">Promote to admin</button>
+                                        </div>
+                                        <div class="manager-columns">
+                                            <input type="text" id="revokeTargetUser" class="form-input" placeholder="User ID">
+                                            <button class="btn btn-danger" onclick="handleRevokeAdmin()">Revoke admin</button>
+                                        </div>
+                                    </div>
+                                    <div class="owner-note">⚠️ Owner only: these controls stay locked to the primary account holder.</div>
+                                </div>
+
+                                <a class="back-link" onclick="hideManagement()">← Back to dashboard</a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
         const rootDomain = window.location.origin;
         const API_BASE_URL = `${rootDomain}/php`;
 
-        // Message handling
-        function showMessage(message, type = 'info') {
-            const container = document.getElementById('messageContainer');
-            const msg = document.createElement('div');
-            msg.className = `message ${type}`;
-            msg.textContent = message;
-            container.appendChild(msg);
-            setTimeout(() => msg.remove(), 5000);
+        function showMessage(message, type = 'info', target = 'auto') {
+            const safeMessage = escapeHtml(message);
+            const authSection = document.getElementById('authSection');
+            const accountSection = document.getElementById('accountSection');
+
+            let container = document.getElementById('messageContainer');
+            if (target === 'account' || (target === 'auto' && accountSection && !accountSection.classList.contains('hidden'))) {
+                container = document.getElementById('messageContainer2') || container;
+            }
+
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span class="toast-indicator"></span>
+                <div class="toast-body">
+                    <strong>${type === 'success' ? 'Success' : type === 'error' ? 'Heads up' : 'Reminder'}</strong>
+                    <span>${safeMessage}</span>
+                </div>
+                <button class="toast-close" aria-label="Dismiss">&times;</button>
+            `;
+
+            const close = () => toast.remove();
+            toast.querySelector('.toast-close').addEventListener('click', close);
+            container.appendChild(toast);
+            setTimeout(close, 5500);
         }
+
         function escapeHtml(text) {
             if (!text) return '';
             return String(text)
@@ -802,11 +1557,22 @@
             showMessage(message, 'error');
         }
 
-        // Tab switching
+        function updateAuthToggle(tab) {
+            document.querySelectorAll('.auth-toggle button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+        }
+
         function switchAuthTab(tab) {
-            document.getElementById('loginTab').classList.remove('active');
-            document.getElementById('registerTab').classList.remove('active');
-            document.getElementById(tab + 'Tab').classList.add('active');
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            if (!loginTab || !registerTab) return;
+
+            loginTab.classList.remove('active');
+            registerTab.classList.remove('active');
+            const targetTab = document.getElementById(`${tab}Tab`);
+            if (targetTab) targetTab.classList.add('active');
+            updateAuthToggle(tab);
         }
 
         // Auth functions
@@ -829,7 +1595,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (response.ok && data.success) {
                     showSuccess('Login successful!');
                     if (data.token) {
@@ -837,7 +1603,6 @@
                     }
                     setTimeout(checkAuthStatus, 1500);
                 } else {
-                    // Show the error message from the backend
                     const errorMessage = data.error || data.message || `Login failed (${response.status})`;
                     showError(errorMessage);
                 }
@@ -872,20 +1637,17 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    // Store the token if provided by backend
                     if (data.token) {
                         localStorage.setItem('token', data.token);
                     }
-                    
+
                     showSuccess('Account created! Logging in...');
-                    
-                    // Clear registration form
+
                     document.getElementById('registerUsername').value = '';
                     document.getElementById('registerEmail').value = '';
                     document.getElementById('registerPassword').value = '';
-                    
-                    // Redirect to account section
-                    setTimeout(() => checkAuthStatus(), 1500);
+
+                    setTimeout(checkAuthStatus, 1500);
                 } else {
                     showError(data.error || 'Registration failed');
                 }
@@ -902,7 +1664,7 @@
                     credentials: 'include'
                 });
                 showSuccess('Logged out');
-                setTimeout(() => checkAuthStatus(), 1500);
+                setTimeout(checkAuthStatus, 1500);
             } catch (error) {
                 console.error('Logout error:', error);
             }
@@ -927,23 +1689,20 @@
                     checkAdmin(data.username);
                     loadPreferences();
 
-                    // Handle redirect after login
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectUrl = urlParams.get('redirect');
                     if (redirectUrl) {
-                        // Decode the redirect URL and validate it's safe
                         try {
                             const decodedUrl = decodeURIComponent(redirectUrl);
                             const redirectObj = new URL(decodedUrl);
                             const currentHostname = window.location.hostname;
                             const redirectHostname = redirectObj.hostname;
-                            
-                            // Allow redirects to same domain and all subdomains of thatoneamiho.cc
-                            const isSafeDomain = 
-                                redirectHostname === currentHostname || 
+
+                            const isSafeDomain =
+                                redirectHostname === currentHostname ||
                                 redirectHostname.endsWith('.thatoneamiho.cc') ||
-                                currentHostname.endsWith('.thatoneamiho.cc') && redirectHostname.endsWith('.thatoneamiho.cc');
-                            
+                                (currentHostname.endsWith('.thatoneamiho.cc') && redirectHostname.endsWith('.thatoneamiho.cc'));
+
                             if (isSafeDomain) {
                                 setTimeout(() => {
                                     window.location.href = decodedUrl;
@@ -958,6 +1717,7 @@
                 } else {
                     document.getElementById('authSection').classList.remove('hidden');
                     document.getElementById('accountSection').classList.add('hidden');
+                    updateAuthToggle('login');
                 }
             } catch (error) {
                 console.error('Auth check error:', error);
@@ -974,11 +1734,11 @@
                 if (data.success) {
                     const statsHTML = `
                         <div class="stat-card">
-                            <div class="stat-label">Account Created</div>
+                            <div class="stat-label">Account created</div>
                             <div class="stat-value">${new Date(data.created_at).toLocaleDateString()}</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">Last Login</div>
+                            <div class="stat-label">Last login</div>
                             <div class="stat-value">${data.last_login ? new Date(data.last_login).toLocaleDateString() : 'Today'}</div>
                         </div>
                     `;
@@ -990,20 +1750,25 @@
         }
 
         function showManagement() {
-            document.getElementById('accountOverview').style.display = 'none';
+            document.getElementById('accountOverview')?.classList?.add('hidden');
             document.getElementById('accountManagement').classList.remove('hidden');
         }
 
         function hideManagement() {
-            document.getElementById('accountOverview').style.display = 'block';
+            document.getElementById('accountOverview')?.classList?.remove('hidden');
             document.getElementById('accountManagement').classList.add('hidden');
         }
 
-        function switchMgmtTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tab + 'Tab').classList.add('active');
-            event.target.classList.add('active');
+        function switchMgmtTab(tab, evt) {
+            document.querySelectorAll('#accountManagement .tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#accountManagement .tab-btn').forEach(el => el.classList.remove('active'));
+
+            const next = document.getElementById(`${tab}Tab`);
+            if (next) next.classList.add('active');
+
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            }
         }
 
         async function handleUpdateUsername() {
@@ -1145,31 +1910,25 @@
             }
         }
 
-        // Admin functions
         async function checkAdmin(username) {
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/check-admin.php`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token
                     }
                 });
                 const data = await response.json();
-                
+
                 if (data.is_admin) {
-                    // Show admin panel
-                    document.getElementById('adminTabBtn').style.display = 'block';
-                    document.getElementById('ownerOnlySection').style.display = 'none'; // Hide owner-only for regular admins
-                    
-                    // Check if this is the owner
+                    document.getElementById('adminTabBtn').style.display = 'inline-flex';
+                    document.getElementById('ownerOnlySection').style.display = 'none';
+
                     if (username === 'thatoneamiho') {
-                        document.getElementById('ownerOnlySection').style.display = 'block'; // Show owner controls
+                        document.getElementById('ownerOnlySection').style.display = 'grid';
                     }
-                    
-                    loadAdminUsers();
                 } else {
-                    // Hide admin panel
                     document.getElementById('adminTabBtn').style.display = 'none';
                     document.getElementById('ownerOnlySection').style.display = 'none';
                 }
@@ -1183,10 +1942,10 @@
         async function searchUsers() {
             const searchTerm = document.getElementById('userSearchInput').value.trim();
             const resultsContainer = document.getElementById('searchResults');
-            
+
             if (searchTerm.length < 1) {
                 resultsContainer.style.display = 'none';
-                resultsContainer.innerHTML = '<p style="color: #8b7355;">Type to search...</p>';
+                resultsContainer.innerHTML = '<p style="color: var(--text-muted);">Type to search...</p>';
                 return;
             }
 
@@ -1195,37 +1954,39 @@
                 const response = await fetch(`${API_BASE_URL}/admin-get-users.php?search=${encodeURIComponent(searchTerm)}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token
                     }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success && data.users && data.users.length > 0) {
-                    let html = `<strong>Found ${data.users.length} user(s)</strong><hr style="margin: 10px 0;">`;
+                    let html = `<strong>Found ${data.users.length} user(s)</strong><hr style="margin: 10px 0; opacity: 0.15;">`;
                     data.users.forEach(user => {
                         const status = user.is_active ? '✓ Active' : '🚫 Banned';
                         const isAdmin = user.is_admin ? '👑 Admin' : '';
                         html += `
-                            <div style="padding: 8px; margin-bottom: 8px; border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.05); cursor: pointer;" onclick="selectAdminUser('${user.username}', ${user.id}, ${user.is_admin ? 1 : 0})">
-                                <div style="color: #ffd700; font-weight: bold;">${user.username}${isAdmin ? ' ' + isAdmin : ''}</div>
+                            <div class="search-result-entry" onclick="selectAdminUser('${user.username}', ${user.id}, ${user.is_admin ? 1 : 0})">
+                                <div style="color: #ffd700; font-weight: 600;">${user.username}${isAdmin ? ' ' + isAdmin : ''}</div>
                                 <div style="color: #ffb84d; font-size: 0.85rem;">ID: ${user.id} • ${status}</div>
-                                <div style="color: #8b7355; font-size: 0.8rem;">📧 ${user.email}</div>
+                                <div style="color: var(--text-muted); font-size: 0.8rem;">📧 ${user.email}</div>
                             </div>
                         `;
                     });
                     resultsContainer.innerHTML = html;
                     resultsContainer.style.display = 'block';
                 } else {
-                    resultsContainer.innerHTML = '<p style="color: #ef4444;">No users found matching your search.</p>';
+                    resultsContainer.innerHTML = '<p style="color: #f87171;">No users found matching your search.</p>';
                     resultsContainer.style.display = 'block';
                 }
             } catch (error) {
                 console.error('Search error:', error);
-                resultsContainer.innerHTML = '<p style="color: #ef4444;">Error searching users.</p>';
+                resultsContainer.innerHTML = '<p style="color: #f87171;">Error searching users.</p>';
                 resultsContainer.style.display = 'block';
             }
         }
+
+        let selectedUserIsAdmin = false;
 
         function selectAdminUser(username, userId, isAdmin = 0) {
             document.getElementById('adminTargetUser').value = userId;
@@ -1233,21 +1994,16 @@
             showSuccess(`Selected user: ${username}${isAdmin ? ' (Admin)' : ''}`);
         }
 
-        async function loadAdminUsers() {
-            // No longer loads all users on page load
-            // Users are searched on demand
-        }
-
         async function handleAdminResetPassword() {
             const targetUser = document.getElementById('adminTargetUser').value.trim();
             const newPassword = document.getElementById('adminNewPassword').value;
 
             if (!targetUser || !newPassword) {
-                showError('Please enter username/ID and new password');
+                showError('Please enter user ID and new password');
                 return;
             }
 
-            let userId = parseInt(targetUser) || null;
+            const userId = parseInt(targetUser, 10);
             if (!userId) {
                 showError('Please enter a valid user ID');
                 return;
@@ -1259,7 +2015,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ user_id: userId, new_password: newPassword })
@@ -1270,7 +2026,6 @@
                     showSuccess('Password reset successfully!');
                     document.getElementById('adminNewPassword').value = '';
                     document.getElementById('adminTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to reset password');
                 }
@@ -1284,11 +2039,11 @@
             const newEmail = document.getElementById('adminNewEmail').value.trim();
 
             if (!targetUser || !newEmail) {
-                showError('Please enter username/ID and new email');
+                showError('Please enter user ID and new email');
                 return;
             }
 
-            let userId = parseInt(targetUser) || null;
+            const userId = parseInt(targetUser, 10);
             if (!userId) {
                 showError('Please enter a valid user ID');
                 return;
@@ -1300,7 +2055,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ user_id: userId, email: newEmail })
@@ -1311,7 +2066,6 @@
                     showSuccess('Email updated successfully!');
                     document.getElementById('adminNewEmail').value = '';
                     document.getElementById('adminTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to update email');
                 }
@@ -1328,7 +2082,7 @@
                 return;
             }
 
-            let userId = parseInt(targetUser) || null;
+            const userId = parseInt(targetUser, 10);
             if (!userId) {
                 showError('Please enter a valid user ID');
                 return;
@@ -1340,17 +2094,16 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ user_id: userId, action: action })
+                    body: JSON.stringify({ user_id: userId, action })
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     showSuccess(data.message);
                     document.getElementById('adminTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to perform action');
                 }
@@ -1373,7 +2126,7 @@
                 return;
             }
 
-            let userId = parseInt(targetUser) || null;
+            const userId = parseInt(targetUser, 10);
             if (!userId) {
                 showError('Please enter a valid user ID');
                 return;
@@ -1385,7 +2138,7 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ user_id: userId, warning: warningMessage })
@@ -1412,7 +2165,7 @@
                 return;
             }
 
-            let userId = parseInt(targetUser) || null;
+            const userId = parseInt(targetUser, 10);
             if (!userId) {
                 showError('Please enter a valid user ID');
                 return;
@@ -1424,20 +2177,16 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        action: 'grant',
-                        user_id: userId
-                    })
+                    body: JSON.stringify({ action: 'grant', user_id: userId })
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     showSuccess(`${data.username} promoted to admin! ✨`);
                     document.getElementById('promoteTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to promote user');
                 }
@@ -1454,7 +2203,7 @@
                 return;
             }
 
-            let userId = parseInt(targetUser) || null;
+            const userId = parseInt(targetUser, 10);
             if (!userId) {
                 showError('Please enter a valid user ID');
                 return;
@@ -1470,20 +2219,16 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
+                        'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        action: 'revoke',
-                        user_id: userId
-                    })
+                    body: JSON.stringify({ action: 'revoke', user_id: userId })
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     showSuccess(`Admin privileges revoked from ${data.username}`);
                     document.getElementById('revokeTargetUser').value = '';
-                    setTimeout(loadAdminUsers, 1500);
                 } else {
                     showError(data.error || 'Failed to revoke admin');
                 }
@@ -1492,7 +2237,6 @@
             }
         }
 
-        // Initialize
         checkAuthStatus();
     </script>
 </body>
