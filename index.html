@@ -666,86 +666,71 @@
                     <div id="adminTab" class="tab-content">
                         <div class="title">👑 Admin Management</div>
 
-                        <!-- User Search -->
-                        <div style="margin-bottom: 20px;">
-                            <div style="color: #ffb84d; margin-bottom: 10px; font-weight: 600;">Search User</div>
-                            <div class="form-group">
-                                <label class="form-label">Search by Username or Email</label>
-                                <input type="text" id="userSearchInput" class="form-input" placeholder="Enter username or email to search..." oninput="searchUsers()">
-                            </div>
-                            <div id="searchResults" style="max-height: 300px; overflow-y: auto; border: 1px solid rgba(59, 130, 246, 0.3); padding: 15px; border-radius: 15px; background: rgba(59, 130, 246, 0.05); display: none;">
-                                <p style="color: #8b7355;">Type to search...</p>
+                        <!-- User Search - Modern Design -->
+                        <div style="margin-bottom: 30px;">
+                            <div style="color: #ffb84d; margin-bottom: 15px; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.5px;">🔍 Search User</div>
+                            <input type="text" id="userSearchInput" class="form-input" placeholder="Search by username or email..." oninput="searchUsers()" style="margin-bottom: 12px;">
+                            <div id="searchResults" style="max-height: 280px; overflow-y: auto; display: none; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 12px;">
+                                <p style="color: #a0a0a0; font-size: 0.9rem;">Type to search...</p>
                             </div>
                         </div>
 
-                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--glass-border);">
+                        <!-- User Management Section -->
+                        <div style="margin-bottom: 30px;">
+                            <div style="color: #ffb84d; margin-bottom: 15px; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.5px;">⚙️ Manage User</div>
+                            
+                            <input type="text" id="adminTargetUser" class="form-input" placeholder="User ID or username" style="margin-bottom: 15px;">
 
-                        <!-- User Management -->
-                        <div style="margin-bottom: 20px;">
-                            <div style="color: #ffb84d; margin-bottom: 15px; font-weight: 600;">Manage User</div>
-
-                            <div class="form-group">
-                                <label class="form-label">User ID / Username</label>
-                                <input type="text" id="adminTargetUser" class="form-input" placeholder="Enter user ID or username">
+                            <!-- Reset Password -->
+                            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                                <input type="password" id="adminNewPassword" class="form-input" placeholder="New password (6+ chars)" style="flex: 1;">
+                                <button class="btn" onclick="handleAdminResetPassword()" style="flex-shrink: 0; background: rgba(59, 130, 246, 0.3);">🔐 Reset</button>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Reset Password</label>
-                                <div style="display: flex; gap: 10px;">
-                                    <input type="password" id="adminNewPassword" class="form-input" placeholder="New password (6+ chars)" style="flex: 1;">
-                                    <button class="btn" onclick="handleAdminResetPassword()" style="flex-shrink: 0;">Reset</button>
-                                </div>
+                            <!-- Update Email -->
+                            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                                <input type="email" id="adminNewEmail" class="form-input" placeholder="New email" style="flex: 1;">
+                                <button class="btn" onclick="handleAdminUpdateEmail()" style="flex-shrink: 0; background: rgba(34, 197, 94, 0.3);">📧 Update</button>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Update Email</label>
-                                <div style="display: flex; gap: 10px;">
-                                    <input type="email" id="adminNewEmail" class="form-input" placeholder="New email" style="flex: 1;">
-                                    <button class="btn" onclick="handleAdminUpdateEmail()" style="flex-shrink: 0;">Update</button>
-                                </div>
+                            <!-- Account Status Buttons -->
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <button class="btn" style="background: rgba(239, 68, 68, 0.3); flex: 1;" onclick="handleAdminUserAction('ban')">🚫 Ban</button>
+                                <button class="btn" style="background: rgba(34, 197, 94, 0.3); flex: 1;" onclick="handleAdminUserAction('unban')">✓ Unban</button>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Account Status</label>
-                                <div style="display: flex; gap: 10px;">
-                                    <button class="btn" style="background: rgba(239, 68, 68, 0.3); flex: 1;" onclick="handleAdminUserAction('ban')">🚫 Ban User</button>
-                                    <button class="btn" style="background: rgba(16, 185, 129, 0.3); flex: 1;" onclick="handleAdminUserAction('unban')">✓ Unban User</button>
-                                </div>
+                            <!-- Warning Message -->
+                            <textarea id="adminWarningMessage" class="form-input" placeholder="Warning message (5-500 chars)" style="min-height: 50px; resize: vertical; margin-bottom: 10px;"></textarea>
+                            <button class="btn" style="width: 100%; background: rgba(251, 146, 60, 0.3);" onclick="handleAdminSendWarning()">⚠️ Issue Warning</button>
+                        </div>
+
+                        <!-- Owner Only Section -->
+                        <div id="ownerOnlySection" style="display: none; margin-bottom: 30px;">
+                            <div style="color: #ffd700; margin-bottom: 15px; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.5px;">👑 Owner Controls</div>
+                            
+                            <!-- Promote Admin -->
+                            <div style="margin-bottom: 15px;">
+                                <input type="text" id="promoteTargetUser" class="form-input" placeholder="User ID or username" style="margin-bottom: 8px;">
+                                <button class="btn" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 255, 0, 0.2)); color: #ffd700; width: 100%; font-weight: 600; border: 1px solid rgba(255, 215, 0, 0.3);" onclick="handleAddAdmin()">✨ Promote to Admin</button>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Send Warning</label>
-                                <textarea id="adminWarningMessage" class="form-input" placeholder="Warning message (5-500 chars)" style="min-height: 60px; resize: vertical;"></textarea>
-                                <button class="btn" style="width: 100%; margin-top: 10px;" onclick="handleAdminSendWarning()">⚠ Issue Warning</button>
+                            <!-- Revoke Admin -->
+                            <div style="margin-bottom: 15px;">
+                                <input type="text" id="revokeTargetUser" class="form-input" placeholder="User ID or username" style="margin-bottom: 8px;">
+                                <button class="btn" style="background: rgba(239, 68, 68, 0.3); width: 100%; font-weight: 600;" onclick="handleRevokeAdmin()">❌ Revoke Admin</button>
+                            </div>
+
+                            <!-- Warning Box -->
+                            <div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 193, 7, 0.05)); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 10px; padding: 12px; backdrop-filter: blur(5px);">
+                                <p style="color: #ffb84d; font-size: 0.9rem; margin: 0;"><strong>⚠️ Owner Only:</strong> These controls are restricted to the account owner.</p>
                             </div>
                         </div>
 
-                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--glass-border);">
-
-                        <!-- Owner Only: Add Admin Section -->
-                        <div id="ownerOnlySection" style="margin-bottom: 20px; display: none;">
-                            <div style="color: #ffd700; margin-bottom: 15px; font-weight: 600;">👑 Owner Controls - Manage Admins</div>
-
-                            <div class="form-group">
-                                <label class="form-label">Promote User to Admin</label>
-                                <input type="text" id="promoteTargetUser" class="form-input" placeholder="Enter user ID or username">
-                                <button class="btn" style="background: #ffd700; color: #000; width: 100%; margin-top: 10px; font-weight: bold;" onclick="handleAddAdmin()">✨ Promote to Admin</button>
-                            </div>
-
-                            <div class="form-group" style="margin-top: 15px;">
-                                <label class="form-label">Revoke Admin from User</label>
-                                <input type="text" id="revokeTargetUser" class="form-input" placeholder="Enter user ID or username">
-                                <button class="btn" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); width: 100%; margin-top: 10px;" onclick="handleRevokeAdmin()">❌ Revoke Admin</button>
-                            </div>
-
-                            <div style="margin-top: 15px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-left: 3px solid #ffd700; border-radius: 10px;">
-                                <p style="color: #ffb84d; font-size: 0.9rem;">⚠️ <strong>Owner Only:</strong> This section is only visible to the account owner (thatoneamiho).</p>
-                            </div>
-                        </div>
+                        <!-- Back Button -->
+                        <button class="back-link" onclick="hideManagement()" style="display: block; width: 100%; text-align: left; margin-top: 30px; padding: 10px 0; color: #8b7355; font-weight: 500; transition: color 0.3s;">← Back to Account</button>
                     </div>
 
-                    <!-- Back Button -->
-                    <button class="back-link" onclick="hideManagement()" style="display: block; width: 100%; text-align: left; margin-top: 30px;">← Back to Account</button>
+                    <!-- Spacer -->
                 </div>
             </div>
         </div>
