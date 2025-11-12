@@ -137,10 +137,11 @@
             position: relative;
             z-index: 1;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             min-height: 100vh;
-            padding: 40px;
+            width: 100%;
+            padding: 20px;
             overflow-y: auto;
         }
 
@@ -150,9 +151,12 @@
             -webkit-backdrop-filter: blur(40px) saturate(200%);
             border: 2px solid var(--glass-border);
             border-radius: 35px;
-            padding: 60px;
-            max-width: 900px;
+            padding: 40px;
             width: 100%;
+            max-width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
             transform: translateZ(0);
             backface-visibility: hidden;
@@ -778,6 +782,15 @@
             msg.textContent = message;
             container.appendChild(msg);
             setTimeout(() => msg.remove(), 5000);
+        }
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         function showSuccess(message) {
@@ -1477,11 +1490,23 @@
         async function loadBanExclusionList() {
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">No authentication token found</p>';
+                    return;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/manage-ban-exclusions.php`, {
+                    method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
+
+                if (!response.ok) {
+                    console.error('Response status:', response.status);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
 
                 const data = await response.json();
                 if (data.success) {
@@ -1492,10 +1517,10 @@
                         data.exclusions.forEach(exclusion => {
                             html += `
                                 <div style="padding: 10px; margin-bottom: 8px; border-left: 3px solid #10b981; background: rgba(16, 185, 129, 0.05); border-radius: 8px;">
-                                    <div style="color: #10b981; font-weight: bold;">${exclusion.username}</div>
-                                    <div style="color: #a0a0a0; font-size: 0.85rem;">ID: ${exclusion.user_id} • Email: ${exclusion.email}</div>
-                                    <div style="color: #8b7355; font-size: 0.8rem; margin-top: 5px;">Reason: ${exclusion.reason || 'N/A'}</div>
-                                    <button class="btn" style="background: rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 5px 10px; width: 100%; margin-top: 8px;" onclick="handleRemoveBanExclusion(${exclusion.user_id}, '${exclusion.username}')">❌ Remove Protection</button>
+                                    <div style="color: #10b981; font-weight: bold;">${escapeHtml(exclusion.username)}</div>
+                                    <div style="color: #a0a0a0; font-size: 0.85rem;">ID: ${exclusion.user_id} • Email: ${escapeHtml(exclusion.email)}</div>
+                                    <div style="color: #8b7355; font-size: 0.8rem; margin-top: 5px;">Reason: ${escapeHtml(exclusion.reason || 'N/A')}</div>
+                                    <button class="btn" style="background: rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 5px 10px; width: 100%; margin-top: 8px;" onclick="handleRemoveBanExclusion(${exclusion.user_id}, '${escapeHtml(exclusion.username)}')">❌ Remove Protection</button>
                                 </div>
                             `;
                         });
@@ -1504,11 +1529,12 @@
                         listContainer.innerHTML = '<p style="color: #8b7355;">No users in ban protection list.</p>';
                     }
                 } else {
-                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error loading protected users.</p>';
+                    console.error('API Error:', data.error);
+                    document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error: ' + (data.error || 'Unknown error') + '</p>';
                 }
             } catch (error) {
                 console.error('Error loading ban exclusion list:', error);
-                document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error loading protected users.</p>';
+                document.getElementById('banExclusionList').innerHTML = '<p style="color: #ef4444;">Error loading protected users: ' + error.message + '</p>';
             }
         }
 
