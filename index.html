@@ -588,6 +588,7 @@
             padding: 14px 24px;
             font-size: 0.98rem;
             font-weight: 600;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             letter-spacing: 0.01em;
             cursor: pointer;
             transition: all 0.35s var(--transition-snappy);
@@ -805,69 +806,98 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .quick-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px;
-        }
-
-        .feature-card {
-            display: grid;
-            gap: 12px;
-            padding: 20px;
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+        .app-menu {
             background: rgba(255, 255, 255, 0.04);
-            transition: transform 0.35s var(--transition-snappy), box-shadow 0.35s ease;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            padding: clamp(22px, 3vw, 28px);
+            display: grid;
+            gap: 20px;
         }
 
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
+        .app-menu-items {
+            display: grid;
+            gap: 14px;
         }
 
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
+        .app-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding: 16px 18px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(10, 14, 28, 0.6);
+            color: var(--text-primary);
+            text-align: left;
+            cursor: pointer;
+            transition: transform 0.25s var(--transition-snappy), box-shadow 0.3s ease;
+        }
+
+        .app-menu-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .app-menu-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
             display: grid;
             place-items: center;
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             background: rgba(92, 124, 250, 0.2);
             border: 1px solid rgba(92, 124, 250, 0.35);
         }
 
-        .feature-body h4 {
-            margin: 0;
-            font-size: 1.1rem;
+        .app-menu-content {
+            display: grid;
+            gap: 4px;
         }
 
-        .feature-body p {
-            margin: 6px 0 0;
+        .app-menu-content strong {
+            font-size: 1rem;
+        }
+
+        .app-menu-content span {
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            font-size: 0.92rem;
+        }
+
+        .app-menu-item--primary {
+            background: linear-gradient(135deg, rgba(92, 124, 250, 0.28), rgba(157, 107, 255, 0.22));
+            border-color: rgba(92, 124, 250, 0.45);
+        }
+
+        .app-menu-item--primary .app-menu-icon {
+            background: rgba(92, 124, 250, 0.3);
+            border-color: rgba(92, 124, 250, 0.55);
+        }
+
+        .app-menu-item--danger {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.24), rgba(220, 38, 38, 0.18));
+            border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        .app-menu-item--danger .app-menu-icon {
+            background: rgba(248, 113, 113, 0.25);
+            border-color: rgba(248, 113, 113, 0.45);
         }
 
         .activity-wrap {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            gap: clamp(16px, 3vw, 24px);
+            display: block;
         }
 
-        .activity-feed,
-        .progress-timeline {
+        .activity-feed {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: var(--radius-md);
             padding: 22px;
             display: grid;
             gap: 18px;
+            max-height: 260px;
+            overflow-y: auto;
         }
 
         .activity-item {
@@ -905,39 +935,6 @@
             color: var(--text-muted);
         }
 
-        .timeline {
-            display: grid;
-            gap: 18px;
-        }
-
-        .timeline-item {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 16px;
-        }
-
-        .timeline-dot {
-            width: 22px;
-            height: 22px;
-            border-radius: 8px;
-            background: rgba(157, 107, 255, 0.2);
-            border: 1px solid rgba(157, 107, 255, 0.4);
-            display: grid;
-            place-items: center;
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
-
-        .timeline-body h4 {
-            margin: 0;
-            font-size: 1.02rem;
-        }
-
-        .timeline-body p {
-            margin: 6px 0 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
 
         .manager-shell {
             display: grid;
@@ -1088,10 +1085,6 @@
                 padding: 24px;
             }
 
-            .activity-wrap {
-                grid-template-columns: 1fr;
-            }
-
             .overview-grid,
             .feature-grid,
             .stat-tiles {
@@ -1125,9 +1118,9 @@
             <div class="hero-insights">
                 <div class="insight-row">
                     <div class="insight-card">
-                        <span class="insight-label">Uptime</span>
-                        <span class="insight-value">99.99%</span>
-                        <span class="insight-trend">▲ 0.6% this month</span>
+                        <span class="insight-label">Security posture</span>
+                        <span class="insight-value">Shielded</span>
+                        <span class="insight-trend">Multi-layer checks active</span>
                     </div>
                     <div class="insight-card">
                         <span class="insight-label">Active sessions</span>
@@ -1143,7 +1136,7 @@
             </div>
 
             <div class="hero-timeline">
-                <span class="timeline-title">Workflows that flow</span>
+                <span class="timeline-title">Elevate your account</span>
                 <div class="hero-step">
                     <div class="step-marker">1</div>
                     <div class="step-body">
@@ -1282,41 +1275,48 @@
                             <div id="statsContainer" class="stat-tiles"></div>
                         </div>
 
-                        <div class="quick-actions">
-                            <button class="btn btn-primary" onclick="showManagement()">Open settings hub</button>
-                            <button class="btn btn-warning" onclick="switchAuthTab('login'); handleLogout();">Reset password</button>
-                            <button class="btn btn-danger" onclick="handleLogout()">Sign out</button>
-                        </div>
-
-                        <div class="feature-grid">
-                            <article class="feature-card">
-                                <div class="feature-icon">🛡️</div>
-                                <div class="feature-body">
-                                    <h4>Account security</h4>
-                                    <p>End-to-end protection with token validation and admin guardrails.</p>
-                                </div>
-                            </article>
-                            <article class="feature-card">
-                                <div class="feature-icon">⚡</div>
-                                <div class="feature-body">
-                                    <h4>Instant actions</h4>
-                                    <p>Update credentials, toggle preferences, and manage sessions instantly.</p>
-                                </div>
-                            </article>
-                            <article class="feature-card">
-                                <div class="feature-icon">🌐</div>
-                                <div class="feature-body">
-                                    <h4>Global access</h4>
-                                    <p>Optimized for Cloudflare with resilient X-Auth token fallback.</p>
-                                </div>
-                            </article>
-                            <article class="feature-card">
-                                <div class="feature-icon">👥</div>
-                                <div class="feature-body">
-                                    <h4>Admin orchestration</h4>
-                                    <p>Promote, revoke, and guide users with rich contextual feedback.</p>
-                                </div>
-                            </article>
+                        <div class="app-menu">
+                            <div class="section-heading">
+                                <h3>Unified command menu</h3>
+                                <p class="section-subtitle">Jump straight to the tools you need without leaving this view.</p>
+                            </div>
+                            <div class="app-menu-items">
+                                <button type="button" class="app-menu-item app-menu-item--primary" onclick="openManagementFromMenu('profile')">
+                                    <span class="app-menu-icon">🎛️</span>
+                                    <div class="app-menu-content">
+                                        <strong>Control center</strong>
+                                        <span>Fine-tune usernames, email aliases, and profile details.</span>
+                                    </div>
+                                </button>
+                                <button type="button" class="app-menu-item" onclick="openManagementFromMenu('security')">
+                                    <span class="app-menu-icon">�</span>
+                                    <div class="app-menu-content">
+                                        <strong>Security toolkit</strong>
+                                        <span>Rotate passwords, protect sessions, and manage recovery.</span>
+                                    </div>
+                                </button>
+                                <button type="button" class="app-menu-item" onclick="openManagementFromMenu('preferences')">
+                                    <span class="app-menu-icon">🎨</span>
+                                    <div class="app-menu-content">
+                                        <strong>Preferences</strong>
+                                        <span>Toggle notifications, privacy mode, and theme options.</span>
+                                    </div>
+                                </button>
+                                <button type="button" id="appMenuAdmin" class="app-menu-item" style="display:none;" onclick="openManagementFromMenu('admin')">
+                                    <span class="app-menu-icon">👑</span>
+                                    <div class="app-menu-content">
+                                        <strong>Admin console</strong>
+                                        <span>Search accounts, issue warnings, and adjust roles.</span>
+                                    </div>
+                                </button>
+                                <button type="button" class="app-menu-item app-menu-item--danger" onclick="handleLogout()">
+                                    <span class="app-menu-icon">�</span>
+                                    <div class="app-menu-content">
+                                        <strong>Sign out</strong>
+                                        <span>Wrap up your session instantly across all devices.</span>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="activity-wrap">
@@ -1347,36 +1347,6 @@
                                         <h4>Cloudflare header fix</h4>
                                         <p>Authorization header fallback (X-Auth-Token) rolled out to production.</p>
                                         <span class="activity-time">1 hour ago</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="progress-timeline">
-                                <div class="section-heading">
-                                    <h3>Roadmap highlights</h3>
-                                    <p class="section-subtitle">See what just landed and what's coming next.</p>
-                                </div>
-                                <div class="timeline">
-                                    <div class="timeline-item">
-                                        <div class="timeline-dot">01</div>
-                                        <div class="timeline-body">
-                                            <h4>Unified glass interface</h4>
-                                            <p>Polished UI with rounded buttons and animated surfaces everywhere.</p>
-                                        </div>
-                                    </div>
-                                    <div class="timeline-item">
-                                        <div class="timeline-dot">02</div>
-                                        <div class="timeline-body">
-                                            <h4>Micro-interaction suite</h4>
-                                            <p>Hover, ripple, and shine effects deliver tactile feedback.</p>
-                                        </div>
-                                    </div>
-                                    <div class="timeline-item">
-                                        <div class="timeline-dot">03</div>
-                                        <div class="timeline-body">
-                                            <h4>Next: Activity analytics</h4>
-                                            <p>Deeper insights with anomaly detection are on the immediate roadmap.</p>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1555,6 +1525,23 @@
 
         function showError(message) {
             showMessage(message, 'error');
+        }
+
+        function promptForPassword(actionDescription = 'continue') {
+            const promptMessage = `Enter your password to ${actionDescription}.`;
+            const password = prompt(promptMessage);
+
+            if (password === null) {
+                showMessage('Action cancelled.', 'info');
+                return null;
+            }
+
+            if (!password.trim()) {
+                showError('Password is required to continue.');
+                return null;
+            }
+
+            return password.trim();
         }
 
         function updateAuthToggle(tab) {
@@ -1759,6 +1746,14 @@
             document.getElementById('accountManagement').classList.add('hidden');
         }
 
+        function openManagementFromMenu(tab) {
+            showManagement();
+            if (tab) {
+                switchMgmtTab(tab);
+            }
+            document.getElementById('accountSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         function switchMgmtTab(tab, evt) {
             document.querySelectorAll('#accountManagement .tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('#accountManagement .tab-btn').forEach(el => el.classList.remove('active'));
@@ -1778,12 +1773,17 @@
                 return;
             }
 
+            const passwordConfirm = promptForPassword('update your username');
+            if (!passwordConfirm) {
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE_URL}/update-username.php`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: newUsername })
+                    body: JSON.stringify({ username: newUsername, password_confirmation: passwordConfirm })
                 });
 
                 const data = await response.json();
@@ -1805,12 +1805,17 @@
                 return;
             }
 
+            const passwordConfirm = promptForPassword('update your email');
+            if (!passwordConfirm) {
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE_URL}/update-email.php`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: newEmail })
+                    body: JSON.stringify({ email: newEmail, password_confirmation: passwordConfirm })
                 });
 
                 const data = await response.json();
@@ -1871,11 +1876,17 @@
             if (!confirm('⚠️ WARNING: This will permanently delete your account. Are you sure?')) return;
             if (!confirm('This action cannot be undone. Are you absolutely sure?')) return;
 
+            const passwordConfirm = promptForPassword('delete your account');
+            if (!passwordConfirm) {
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE_URL}/delete-account.php`, {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password_confirmation: passwordConfirm })
                 });
 
                 const data = await response.json();
@@ -1921,21 +1932,31 @@
                 });
                 const data = await response.json();
 
+                const adminTabButton = document.getElementById('adminTabBtn');
+                const ownerOnlySection = document.getElementById('ownerOnlySection');
+                const appMenuAdmin = document.getElementById('appMenuAdmin');
+
                 if (data.is_admin) {
-                    document.getElementById('adminTabBtn').style.display = 'inline-flex';
-                    document.getElementById('ownerOnlySection').style.display = 'none';
+                    if (adminTabButton) adminTabButton.style.display = 'inline-flex';
+                    if (appMenuAdmin) appMenuAdmin.style.display = 'flex';
+                    if (ownerOnlySection) ownerOnlySection.style.display = 'none';
 
                     if (username === 'thatoneamiho') {
-                        document.getElementById('ownerOnlySection').style.display = 'grid';
+                        if (ownerOnlySection) ownerOnlySection.style.display = 'grid';
                     }
                 } else {
-                    document.getElementById('adminTabBtn').style.display = 'none';
-                    document.getElementById('ownerOnlySection').style.display = 'none';
+                    if (adminTabButton) adminTabButton.style.display = 'none';
+                    if (appMenuAdmin) appMenuAdmin.style.display = 'none';
+                    if (ownerOnlySection) ownerOnlySection.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Error checking admin status:', error);
-                document.getElementById('adminTabBtn').style.display = 'none';
-                document.getElementById('ownerOnlySection').style.display = 'none';
+                const adminTabButton = document.getElementById('adminTabBtn');
+                const ownerOnlySection = document.getElementById('ownerOnlySection');
+                const appMenuAdmin = document.getElementById('appMenuAdmin');
+                if (adminTabButton) adminTabButton.style.display = 'none';
+                if (ownerOnlySection) ownerOnlySection.style.display = 'none';
+                if (appMenuAdmin) appMenuAdmin.style.display = 'none';
             }
         }
 
@@ -2009,6 +2030,11 @@
                 return;
             }
 
+            const adminPassword = promptForPassword('reset this user password');
+            if (!adminPassword) {
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-reset-password.php`, {
@@ -2018,7 +2044,7 @@
                         'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ user_id: userId, new_password: newPassword })
+                    body: JSON.stringify({ user_id: userId, new_password: newPassword, password_confirmation: adminPassword })
                 });
 
                 const data = await response.json();
@@ -2049,6 +2075,11 @@
                 return;
             }
 
+            const adminPassword = promptForPassword('change this user email');
+            if (!adminPassword) {
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-update-email.php`, {
@@ -2058,7 +2089,7 @@
                         'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ user_id: userId, email: newEmail })
+                    body: JSON.stringify({ user_id: userId, email: newEmail, password_confirmation: adminPassword })
                 });
 
                 const data = await response.json();
@@ -2088,6 +2119,12 @@
                 return;
             }
 
+            const actionDescription = action === 'ban' ? 'ban this user' : action === 'unban' ? 'unban this user' : 'update this user';
+            const adminPassword = promptForPassword(actionDescription);
+            if (!adminPassword) {
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-user-action.php`, {
@@ -2097,7 +2134,7 @@
                         'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ user_id: userId, action })
+                    body: JSON.stringify({ user_id: userId, action, password_confirmation: adminPassword })
                 });
 
                 const data = await response.json();
@@ -2132,6 +2169,11 @@
                 return;
             }
 
+            const adminPassword = promptForPassword('send this warning');
+            if (!adminPassword) {
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin-send-warning.php`, {
@@ -2141,7 +2183,7 @@
                         'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ user_id: userId, warning: warningMessage })
+                    body: JSON.stringify({ user_id: userId, warning: warningMessage, password_confirmation: adminPassword })
                 });
 
                 const data = await response.json();
@@ -2171,6 +2213,11 @@
                 return;
             }
 
+            const adminPassword = promptForPassword('promote this user');
+            if (!adminPassword) {
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/manage-admin-role.php`, {
@@ -2180,7 +2227,7 @@
                         'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ action: 'grant', user_id: userId })
+                    body: JSON.stringify({ action: 'grant', user_id: userId, password_confirmation: adminPassword })
                 });
 
                 const data = await response.json();
@@ -2213,6 +2260,11 @@
                 return;
             }
 
+            const adminPassword = promptForPassword('revoke this admin');
+            if (!adminPassword) {
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/manage-admin-role.php`, {
@@ -2222,7 +2274,7 @@
                         'X-Auth-Token': token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ action: 'revoke', user_id: userId })
+                    body: JSON.stringify({ action: 'revoke', user_id: userId, password_confirmation: adminPassword })
                 });
 
                 const data = await response.json();
