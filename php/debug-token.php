@@ -19,19 +19,36 @@ $result = [
     'database_info' => []
 ];
 
-// Try to extract token
+// Try to extract token from multiple sources
 $auth_header = '';
+
+// Try 1: Standard Authorization header
 if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
     $auth_header = $_SERVER['HTTP_AUTHORIZATION'];
     $result['token_info']['source'] = 'HTTP_AUTHORIZATION';
-} elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+}
+
+// Try 2: Redirect Authorization
+if (empty($auth_header) && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
     $auth_header = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
     $result['token_info']['source'] = 'REDIRECT_HTTP_AUTHORIZATION';
-} elseif (function_exists('getallheaders')) {
+}
+
+// Try 3: Custom header (workaround for Cloudflare/proxies)
+if (empty($auth_header) && isset($_SERVER['HTTP_X_AUTH_TOKEN'])) {
+    $auth_header = 'Bearer ' . $_SERVER['HTTP_X_AUTH_TOKEN'];
+    $result['token_info']['source'] = 'HTTP_X_AUTH_TOKEN (custom header)';
+}
+
+// Try 4: getallheaders
+if (empty($auth_header) && function_exists('getallheaders')) {
     $headers = getallheaders();
     if (isset($headers['Authorization'])) {
         $auth_header = $headers['Authorization'];
         $result['token_info']['source'] = 'getallheaders (Authorization)';
+    } elseif (isset($headers['X-Auth-Token'])) {
+        $auth_header = 'Bearer ' . $headers['X-Auth-Token'];
+        $result['token_info']['source'] = 'getallheaders (X-Auth-Token)';
     }
 }
 

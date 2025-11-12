@@ -25,16 +25,20 @@ try {
     }
     error_log('REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD']);
     
-    // Get the Bearer token from Authorization header
+    // Get the Bearer token from Authorization header or custom header
     $auth_header = '';
     
-    // Try multiple ways to get Authorization header
+    // Try multiple ways to get token (handles proxies/Cloudflare)
     if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
         $auth_header = $_SERVER['HTTP_AUTHORIZATION'];
         error_log('Token from HTTP_AUTHORIZATION');
     } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
         $auth_header = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         error_log('Token from REDIRECT_HTTP_AUTHORIZATION');
+    } elseif (isset($_SERVER['HTTP_X_AUTH_TOKEN'])) {
+        // Custom header workaround for Cloudflare/proxies
+        $auth_header = 'Bearer ' . $_SERVER['HTTP_X_AUTH_TOKEN'];
+        error_log('Token from HTTP_X_AUTH_TOKEN (custom header)');
     } elseif (function_exists('getallheaders')) {
         $headers = getallheaders();
         if (isset($headers['Authorization'])) {
@@ -43,10 +47,13 @@ try {
         } elseif (isset($headers['authorization'])) {
             $auth_header = $headers['authorization'];
             error_log('Token from getallheaders() authorization (lowercase)');
+        } elseif (isset($headers['X-Auth-Token'])) {
+            $auth_header = 'Bearer ' . $headers['X-Auth-Token'];
+            error_log('Token from getallheaders() X-Auth-Token');
         }
     }
     
-    error_log('Auth header value: ' . $auth_header);
+    error_log('Auth header value: ' . substr($auth_header, 0, 50));
     
     if (!preg_match('/Bearer\s+(.+)/', $auth_header, $matches)) {
         http_response_code(401);

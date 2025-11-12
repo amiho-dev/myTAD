@@ -1504,6 +1504,7 @@
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     }
                 });
@@ -1529,6 +1530,7 @@
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json',
                         'X-Test': 'test-value'
                     }
@@ -1542,6 +1544,8 @@
                 // Check if Authorization header was received
                 if (data.all_headers && data.all_headers.HTTP_AUTHORIZATION) {
                     console.log('✅ Authorization header WAS received by server!');
+                } else if (data.all_headers && data.all_headers.HTTP_X_AUTH_TOKEN) {
+                    console.log('✅ Custom X-Auth-Token header WAS received by server! (fallback working)');
                 } else {
                     console.log('❌ Authorization header NOT received by server');
                     console.log('This might be a proxy/server configuration issue');
@@ -1560,6 +1564,7 @@
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     }
                 });
@@ -1586,6 +1591,7 @@
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'X-Auth-Token': token,  // Fallback for Cloudflare/proxies
                         'Content-Type': 'application/json'
                     }
                 });
