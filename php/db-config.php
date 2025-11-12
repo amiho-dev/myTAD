@@ -2,20 +2,44 @@
 /**
  * Iron Dominion - Database Configuration & Initialization
  * 
- * Instructions for Plesk Database Setup:
- * 1. Log in to your Plesk Control Panel
- * 2. Go to Databases
- * 3. Create a new database (e.g., "iron_dominion")
- * 4. Note the database name, username, and password
- * 5. Update the configuration below
- * 6. Run this file once or visit it in your browser to initialize the database
+ * SECURITY: Database credentials are loaded from a local configuration file
+ * that is NOT committed to version control.
+ * 
+ * Setup Instructions:
+ * 1. Visit setup.php on your server to configure database credentials
+ * 2. Or manually create php/config.local.php with:
+ *    define('DB_HOST', 'localhost:3306');
+ *    define('DB_USER', 'username');
+ *    define('DB_PASS', 'password');
+ *    define('DB_NAME', 'database_name');
+ * 3. Make sure php/config.local.php has restricted permissions (chmod 600)
  */
 
-// Database credentials - UPDATE THESE FOR YOUR PLESK DATABASE
-define('DB_HOST', 'localhost:3306');      // dominion subdomain MariaDB
-define('DB_USER', 'mytad');               // MariaDB username
-define('DB_PASS', 'y+nQzZa4BS?!,;A');     // MariaDB password
-define('DB_NAME', 'mytad');               // MariaDB database name
+// Load local configuration (NOT in git)
+$config_file = __DIR__ . '/config.local.php';
+
+if (!file_exists($config_file)) {
+    http_response_code(500);
+    die(json_encode([
+        'error' => 'Database configuration missing',
+        'details' => 'Please run setup.php to configure your database credentials',
+        'setup_url' => 'setup.php'
+    ]));
+}
+
+require_once $config_file;
+
+// Verify all required constants are defined
+$required_constants = ['DB_HOST', 'DB_USER', 'DB_PASS', 'DB_NAME'];
+foreach ($required_constants as $const) {
+    if (!defined($const)) {
+        http_response_code(500);
+        die(json_encode([
+            'error' => 'Incomplete database configuration',
+            'details' => "Missing constant: $const"
+        ]));
+    }
+}
 
 // Cookie settings
 define('REMEMBER_ME_DURATION', 30 * 24 * 60 * 60); // 30 days in seconds

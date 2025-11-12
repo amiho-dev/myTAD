@@ -142,7 +142,7 @@ try {
         // Generic message for security (don't reveal if user exists)
         http_response_code(401);
         SecurityManager::logLoginAttempt($conn, $client_ip, $username, 0, 'User not found');
-        echo json_encode(['error' => 'Invalid username or password']);
+        echo json_encode(['error' => 'Username or password wrong. Please try again.']);
         $conn->close();
         exit;
     }
@@ -224,7 +224,7 @@ try {
         }
         
         http_response_code(401);
-        echo json_encode(['error' => 'Invalid username or password']);
+        echo json_encode(['error' => 'Username or password wrong. Please try again.']);
         $conn->close();
         exit;
     }

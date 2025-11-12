@@ -1,0 +1,29 @@
+# Local configuration files with sensitive data
+php/config.local.php
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+error_log
+
+# Temporary files
+.tmp
+temp/
+
+# Node modules (if using npm)
+node_modules/
+
+# Setup file (delete after configuration)
+setup.php
