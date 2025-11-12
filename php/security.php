@@ -71,6 +71,43 @@ class SecurityManager {
     }
     
     /**
+     * Get device fingerprint - unique identifier for device
+     */
+    public static function getDeviceFingerprint() {
+        $components = [
+            $_SERVER['HTTP_USER_AGENT'] ?? '',
+            $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '',
+            $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '',
+            isset($_SERVER['HTTP_ACCEPT']) ? substr($_SERVER['HTTP_ACCEPT'], 0, 100) : ''
+        ];
+        return hash('sha256', implode('|', $components));
+    }
+    
+    /**
+     * Check if device is banned
+     */
+    public static function isDeviceBanned($conn, $device_fingerprint, $ip_address) {
+        $stmt = $conn->prepare("
+            SELECT id, is_permanent, banned_until FROM device_bans 
+            WHERE (device_fingerprint = ? OR ip_address = ?)
+            AND (is_permanent = 1 OR banned_until > NOW())
+            LIMIT 1
+        ");
+        
+        if (!$stmt) {
+            return null;
+        }
+        
+        $stmt->bind_param("ss", $device_fingerprint, $ip_address);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $ban = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $ban;
+    }
+    
+    /**
      * Check rate limiting (brute force protection)
      */
     public static function checkRateLimit($conn, $identifier, $max_attempts = 5, $window_minutes = 15) {
