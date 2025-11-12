@@ -1517,6 +1517,40 @@
             }
         }
 
+        async function diagnosticHeaders() {
+            try {
+                const token = localStorage.getItem('token');
+                console.log('Running diagnostic...');
+                console.log('Token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+                console.log('API Base URL:', API_BASE_URL);
+                console.log('Full Request URL:', API_BASE_URL + '/diagnostic-headers.php');
+
+                const response = await fetch(`${API_BASE_URL}/diagnostic-headers.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'X-Test': 'test-value'
+                    }
+                });
+
+                console.log('Response Status:', response.status);
+                const data = await response.json();
+                console.log('DIAGNOSTIC RESPONSE:');
+                console.log(JSON.stringify(data, null, 2));
+                
+                // Check if Authorization header was received
+                if (data.all_headers && data.all_headers.HTTP_AUTHORIZATION) {
+                    console.log('✅ Authorization header WAS received by server!');
+                } else {
+                    console.log('❌ Authorization header NOT received by server');
+                    console.log('This might be a proxy/server configuration issue');
+                }
+            } catch (error) {
+                console.error('Diagnostic error:', error);
+            }
+        }
+
         async function testHeaders() {
             try {
                 const token = localStorage.getItem('token');
