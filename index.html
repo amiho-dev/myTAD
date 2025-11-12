@@ -34,6 +34,7 @@
         html, body {
             width: 100%;
             height: 100%;
+            overflow: hidden;
         }
 
         body {
@@ -139,10 +140,10 @@
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            min-height: 100vh;
             width: 100%;
-            padding: 20px;
-            overflow-y: auto;
+            height: 100vh;
+            padding: 10px;
+            overflow: hidden;
         }
 
         .card {
@@ -153,13 +154,16 @@
             border-radius: 35px;
             padding: 40px;
             width: 100%;
+            height: 100%;
             max-width: 100%;
-            height: 100vh;
-            max-height: 100vh;
+            max-height: 100%;
             overflow-y: auto;
+            overflow-x: hidden;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
             transform: translateZ(0);
             backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -197,6 +201,10 @@
         .content {
             display: grid;
             gap: 30px;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .title {
