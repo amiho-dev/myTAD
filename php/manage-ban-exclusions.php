@@ -6,13 +6,6 @@ header('Access-Control-Allow-Headers: Authorization, Content-Type');
 
 session_start();
 
-// Check authentication
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
-
 require_once 'db-config.php';
 require_once 'security.php';
 
