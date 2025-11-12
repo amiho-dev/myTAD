@@ -59,12 +59,22 @@ try {
         exit;
     }
 
-    // Check if user is in ban exclusion list (only for ban action)
-    if ($action === 'ban' && SecurityManager::isBanExcluded($conn, $target_user_id)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'This user is protected and cannot be banned']);
-        exit;
+    // Prevent banning admin users
+    if ($action === 'ban') {
+        $admin_check = $conn->prepare("SELECT id FROM admins WHERE user_id = ? AND is_active = 1");
+        $admin_check->bind_param("i", $target_user_id);
+        $admin_check->execute();
+        $admin_check_result = $admin_check->get_result();
+        
+        if ($admin_check_result->num_rows > 0) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Cannot ban admin users']);
+            $admin_check->close();
+            exit;
+        }
+        $admin_check->close();
     }
+
     // Check if we need to add columns for bans/mutes (simplified - using is_active flag)
     if ($action === 'ban') {
         $update_stmt = $conn->prepare("UPDATE users SET is_active = 0 WHERE id = ?");

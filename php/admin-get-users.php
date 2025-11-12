@@ -68,10 +68,12 @@ try {
         $search_term = '%' . $conn->real_escape_string($search) . '%';
         
         $users_stmt = $conn->prepare(
-            "SELECT id, username, email, created_at, last_login, is_active 
-             FROM users 
-             WHERE username LIKE ? OR email LIKE ? 
-             ORDER BY created_at DESC 
+            "SELECT u.id, u.username, u.email, u.created_at, u.last_login, u.is_active,
+                    CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END AS is_admin
+             FROM users u
+             LEFT JOIN admins a ON u.id = a.user_id AND a.is_active = 1
+             WHERE u.username LIKE ? OR u.email LIKE ? 
+             ORDER BY u.created_at DESC 
              LIMIT 50"
         );
         
@@ -83,9 +85,11 @@ try {
     } else {
         // Fetch all users
         $users_stmt = $conn->prepare(
-            "SELECT id, username, email, created_at, last_login, is_active 
-             FROM users 
-             ORDER BY created_at DESC 
+            "SELECT u.id, u.username, u.email, u.created_at, u.last_login, u.is_active,
+                    CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END AS is_admin
+             FROM users u
+             LEFT JOIN admins a ON u.id = a.user_id AND a.is_active = 1
+             ORDER BY u.created_at DESC 
              LIMIT 100"
         );
         
