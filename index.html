@@ -814,6 +814,15 @@
                     body: JSON.stringify({ username, password, remember_me: rememberMe })
                 });
 
+                // Check if response is ok
+                if (!response.ok) {
+                    console.error('Server error:', response.status, response.statusText);
+                    const errorData = await response.text();
+                    console.error('Response body:', errorData);
+                    showError(`Connection error: ${response.status} ${response.statusText}`);
+                    return;
+                }
+
                 const data = await response.json();
                 if (data.success) {
                     showSuccess('Login successful!');
@@ -823,7 +832,7 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showError('Connection error');
+                showError('Connection error: ' + error.message);
             }
         }
 

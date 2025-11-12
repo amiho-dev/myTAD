@@ -29,7 +29,10 @@ function getDBConnection() {
         $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
         
         if ($conn->connect_error) {
-            throw new Exception('Database connection failed: ' . $conn->connect_error);
+            $error_msg = 'Database connection failed: ' . $conn->connect_error;
+            // Log to error log for debugging
+            error_log($error_msg);
+            throw new Exception($error_msg);
         }
         
         // Set charset to utf8mb4
@@ -38,7 +41,13 @@ function getDBConnection() {
         return $conn;
     } catch (Exception $e) {
         http_response_code(500);
-        die(json_encode(['error' => 'Database connection error: ' . $e->getMessage()]));
+        $error_response = [
+            'error' => 'Database connection error',
+            'details' => $e->getMessage(),
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        error_log('DB Connection Error: ' . json_encode($error_response));
+        die(json_encode($error_response));
     }
 }
 
