@@ -44,6 +44,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Get client IP and user agent
 $client_ip = SecurityManager::getClientIP();
 $user_agent = SecurityManager::getUserAgent();
+$device_fingerprint = SecurityManager::getDeviceFingerprint();
 
 // Get JSON request body
 $input = json_decode(file_get_contents('php://input'), true);
@@ -68,6 +69,55 @@ try {
         http_response_code(429);
         SecurityManager::logLoginAttempt($conn, $client_ip, $username, 0, 'Rate limit exceeded');
         echo json_encode(['error' => 'Too many login attempts. Please try again later.']);
+        $conn->close();
+        exit;
+    }
+    
+    // Check if device is banned
+    $device_ban = SecurityManager::isDeviceBanned($conn, $device_fingerprint, $client_ip);
+    if ($device_ban) {
+        // Device is banned, don't reveal which user they're trying to log in as
+        http_response_code(403);
+        
+        // Determine if ban is permanent
+        $is_permanent = (bool)$device_ban['is_permanent'];
+        $banned_until = $device_ban['banned_until'];
+        
+        // Set a cookie to remember this device is banned
+        $cookie_expires = $is_permanent ? time() + (365 * 24 * 60 * 60) : strtotime($banned_until);
+        setcookie(
+            'mytad_device_banned',
+            '1',
+            $cookie_expires,
+            '/',
+            '',
+            isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+            true  // HttpOnly
+        );
+        
+        setcookie(
+            'mytad_device_fingerprint',
+            $device_fingerprint,
+            $cookie_expires,
+            '/',
+            '',
+            isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+            true  // HttpOnly
+        );
+        
+        $response = [
+            'error' => 'banned_device',
+            'message' => 'Your access has been restricted',
+            'is_permanent' => $is_permanent
+        ];
+        
+        if (!$is_permanent && $banned_until) {
+            $response['banned_until'] = $banned_until;
+            $response['banned_until_formatted'] = date('F j, Y \a\t g:i A', strtotime($banned_until));
+        }
+        
+        SecurityManager::logLoginAttempt($conn, $client_ip, $username ?? 'unknown', 0, 'Device banned');
+        echo json_encode($response);
         $conn->close();
         exit;
     }
@@ -103,7 +153,40 @@ try {
     if (!$user['is_active']) {
         http_response_code(403);
         SecurityManager::logLoginAttempt($conn, $client_ip, $username, 0, 'Account disabled');
-        echo json_encode(['error' => 'Account has been disabled']);
+        
+        // Check if there's a temporary ban
+        $is_permanent = false;
+        $ban_expires_at = null;
+        
+        if ($user['account_locked_until']) {
+            $lock_time = strtotime($user['account_locked_until']);
+            $now = time();
+            
+            if ($lock_time > $now) {
+                // Temporary ban (account locked)
+                $is_permanent = false;
+                $ban_expires_at = $user['account_locked_until'];
+            } else {
+                // Lock has expired but account is still inactive, so it's a permanent ban
+                $is_permanent = true;
+            }
+        } else {
+            // No unlock time set, so it's a permanent ban
+            $is_permanent = true;
+        }
+        
+        $response = [
+            'error' => 'account_banned',
+            'message' => 'Your access has been restricted until further notice',
+            'is_permanent' => $is_permanent
+        ];
+        
+        if (!$is_permanent && $ban_expires_at) {
+            $response['banned_until'] = $ban_expires_at;
+            $response['banned_until_formatted'] = date('F j, Y \a\t g:i A', strtotime($ban_expires_at));
+        }
+        
+        echo json_encode($response);
         $conn->close();
         exit;
     }
